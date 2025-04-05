@@ -1,0 +1,16 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.SmartList" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <item name="colorPrimary">@color/sunglow</item>  <!-- Cambia esto a un color deseado -->
+        <item name="colorPrimaryContainer">@color/sunglow</item>  <!-- Opcional: Usado para el contenedor primario -->
+        <item name="colorOnPrimary">@color/smoky_black</item>  <!-- Color del texto sobre el fondo primario -->
+        <item name="colorSecondary">@color/sunglow</item>  <!-- Cambia el color secundario a tu color deseado -->
+        <item name="colorOnSecondary">@color/smoky_black</item>  <!-- Color del texto sobre el fondo secundario -->
+        <item name="android:buttonStyle">@style/Widget.Material3.Button</item>  <!-- Estilo del botón -->
+    </style>
+
+    <style name="Theme.SmartList" parent="Base.Theme.SmartList">
+        <item name="android:fontFamily">@font/plus_jakarta_sans</item>
+    </style>
+</resources>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fondo principal -->
+    <color name="floral_white">#FAF7F0</color>
+
+    <!-- Color de apoyo (borrar producto) -->
+    <color name="eggshell">#F5EDDB</color>
+
+    <!-- Elementos secundarios / tarjetas -->
+    <color name="jasmine">#F7DB8C</color>
+
+    <!-- Llamadas a la acción -->
+    <color name="sunglow">#FFCA46</color>
+
+    <!-- Color secundario premium -->
+    <color name="dark_goldenrod">#AB8C36</color>
+
+    <!-- Texto y contraste -->
+    <color name="smoky_black">#1F1A0A</color>
+</resources>
