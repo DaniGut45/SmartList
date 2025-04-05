@@ -1,3 +1,5 @@
+// MainActivity.kt
+
 package com.example.smartlist.view
 
 import android.os.Bundle
@@ -9,7 +11,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.commit
 import androidx.fragment.app.replace
 import com.example.smartlist.R
-import com.example.smartlist.view.MainFragment
+import com.example.smartlist.utils.SessionManager
 
 class MainActivity : AppCompatActivity() {
 
@@ -24,38 +26,42 @@ class MainActivity : AppCompatActivity() {
         btnHome = findViewById(R.id.btn_home)
         btnProfile = findViewById(R.id.btn_profile)
 
-        // Cargar el fragmento al iniciar la actividad
         if (savedInstanceState == null) {
             supportFragmentManager.commit {
                 replace<MainFragment>(R.id.fragmentContainer)
             }
-            updateBottomNavColors(true) // Establece Home como el botón seleccionado al inicio
+            updateBottomNavColors(true)
         }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.fragmentContainer)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top - 80, systemBars.right, systemBars.bottom) // Asegúrate de ajustar el top según la altura de topBar
+            v.setPadding(systemBars.left, systemBars.top - 80, systemBars.right, systemBars.bottom)
             insets
         }
 
-        // Configurar botón de navegación para el Home
         btnHome.setOnClickListener {
-            updateBottomNavColors(true) // Cambia a Home
+            supportFragmentManager.commit {
+                replace<MainFragment>(R.id.fragmentContainer)
+            }
+            updateBottomNavColors(true)
         }
 
-        // Configurar botón de navegación para el Perfil
         btnProfile.setOnClickListener {
-            updateBottomNavColors(false) // Cambia a Perfil
+            val destination = if (SessionManager.isLoggedIn) {
+                UserFragment::class.java
+            } else {
+                LoginFragment::class.java
+            }
+
+            supportFragmentManager.commit {
+                replace(R.id.fragmentContainer, destination, null)
+            }
+            updateBottomNavColors(false)
         }
     }
 
     private fun updateBottomNavColors(isHomeSelected: Boolean) {
-        if (isHomeSelected) {
-            btnHome.setColorFilter(getColor(R.color.dark_goldenrod)) // Cambia el color de Home
-            btnProfile.setColorFilter(getColor(R.color.smoky_black)) // Cambia el color de Perfil
-        } else {
-            btnHome.setColorFilter(getColor(R.color.smoky_black)) // Cambia el color de Home
-            btnProfile.setColorFilter(getColor(R.color.dark_goldenrod)) // Cambia el color de Perfil
-        }
+        btnHome.setColorFilter(getColor(if (isHomeSelected) R.color.dark_goldenrod else R.color.smoky_black))
+        btnProfile.setColorFilter(getColor(if (!isHomeSelected) R.color.dark_goldenrod else R.color.smoky_black))
     }
 }
