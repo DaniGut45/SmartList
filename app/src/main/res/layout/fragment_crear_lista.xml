@@ -1,0 +1,81 @@
+<!-- fragment_crear_lista.xml -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/floral_white"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:id="@+id/layout_root"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Lista de la Compra"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textColor="@color/smoky_black"
+            android:layout_marginBottom="24dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <EditText
+                android:id="@+id/et_product"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Introduce un producto"
+                android:background="@drawable/rounded_input_bg"
+                android:padding="12dp"
+                android:textColor="@color/dark_goldenrod"
+                android:textColorHint="@color/dark_goldenrod"
+                android:fontFamily="@font/plus_jakarta_sans" />
+
+
+            <Space android:layout_width="8dp" android:layout_height="wrap_content" />
+
+            <EditText
+                android:id="@+id/et_quantity"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Introduce una cantidad"
+                android:background="@drawable/rounded_input_bg"
+                android:padding="12dp"
+                android:textColor="@color/dark_goldenrod"
+                android:textColorHint="@color/dark_goldenrod"
+                android:fontFamily="@font/plus_jakarta_sans"/>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btn_add_product"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Añadir producto"
+            android:background="@drawable/rounded_button_bg"
+            android:textColor="@color/smoky_black" />
+
+        <!-- Contenedores de supermercados -->
+        <LinearLayout
+            android:id="@+id/mercadona_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="24dp" />
+
+        <LinearLayout
+            android:id="@+id/carrefour_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="24dp" />
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingBottom="8dp"
+    android:layout_marginTop="16dp">
+
+    <ImageView
+        android:id="@+id/iv_logo"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginEnd="8dp"
+        android:src="@drawable/logo_mercadona" />
+
+    <TextView
+        android:id="@+id/tv_super_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Mercadona"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:textColor="@color/smoky_black"
+        android:fontFamily="@font/plus_jakarta_sans" />
+</LinearLayout>

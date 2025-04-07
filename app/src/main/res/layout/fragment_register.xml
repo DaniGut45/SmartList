@@ -14,7 +14,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Iniciar sesión"
+            android:text="Registro de usuario"
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="@color/smoky_black"
@@ -27,10 +27,22 @@
             android:hint="Introduce tu correo"
             android:background="@drawable/rounded_input_bg"
             android:padding="12dp"
+            android:inputType="textEmailAddress"
             android:textColor="@color/dark_goldenrod"
             android:textColorHint="@color/dark_goldenrod"
-            android:fontFamily="@font/plus_jakarta_sans"
-            android:inputType="textEmailAddress" />
+            android:fontFamily="@font/plus_jakarta_sans"/>
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Introduce tu nombre de usuario"
+            android:background="@drawable/rounded_input_bg"
+            android:padding="12dp"
+            android:layout_marginTop="16dp"
+            android:inputType="textPersonName"
+            android:textColor="@color/dark_goldenrod"
+            android:textColorHint="@color/dark_goldenrod"
+            android:fontFamily="@font/plus_jakarta_sans"/>
 
         <EditText
             android:layout_width="match_parent"
@@ -38,31 +50,32 @@
             android:hint="Introduce tu contraseña"
             android:background="@drawable/rounded_input_bg"
             android:padding="12dp"
+            android:inputType="textPassword"
+            android:layout_marginTop="16dp"
             android:textColor="@color/dark_goldenrod"
             android:textColorHint="@color/dark_goldenrod"
-            android:fontFamily="@font/plus_jakarta_sans"
-            android:inputType="textPassword"
-            android:layout_marginTop="16dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="¿Olvidaste tu contraseña?"
-            android:textColor="@color/smoky_black"
-            android:textSize="12sp"
-            android:layout_marginTop="8dp"
-            android:fontFamily="@font/plus_jakarta_sans"
-            android:layout_gravity="center_horizontal" />
+            android:fontFamily="@font/plus_jakarta_sans"/>
 
         <Button
-            android:id="@+id/btn_login"
+            android:id="@+id/btn_register"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Iniciar sesión"
+            android:text="Registrarse"
             android:backgroundTint="@color/sunglow"
             android:textColor="@color/smoky_black"
             android:layout_marginTop="24dp"
             android:fontFamily="@font/plus_jakarta_sans" />
+
+        <TextView
+            android:id="@+id/tv_to_login"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="¿Ya tienes cuenta? Inicia sesión"
+            android:textColor="@color/smoky_black"
+            android:textSize="12sp"
+            android:layout_marginTop="12dp"
+            android:fontFamily="@font/plus_jakarta_sans"
+            android:layout_gravity="center_horizontal" />
 
         <!-- Botón de Google -->
         <LinearLayout
@@ -72,8 +85,7 @@
             android:padding="12dp"
             android:layout_marginTop="12dp"
             android:background="@drawable/rounded_button_bg"
-            android:gravity="center"
-            android:layout_gravity="center_horizontal">
+            android:gravity="center_vertical|center_horizontal">
 
             <ImageView
                 android:layout_width="20dp"

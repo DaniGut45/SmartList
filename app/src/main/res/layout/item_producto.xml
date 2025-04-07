@@ -1,0 +1,39 @@
+<!-- res/layout/item_producto.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="8dp">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_nombre_producto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nombre del producto"
+            android:textColor="@color/smoky_black"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_precio_producto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Precio unitario: 0.00€"
+            android:textColor="#888888"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btn_borrar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Borrar"
+        android:backgroundTint="@color/jasmine"
+        android:textColor="@color/smoky_black" />
+</LinearLayout>
