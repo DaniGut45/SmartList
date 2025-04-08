@@ -7,6 +7,14 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.fragment.app.replace
 import com.example.smartlist.R
+import com.example.smartlist.model.Producto
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import android.widget.ArrayAdapter
+import android.text.Editable
+import android.text.TextWatcher
+import com.example.smartlist.model.ProductoConPrecio
+
 
 class CreateListFragment : Fragment() {
 
@@ -15,15 +23,7 @@ class CreateListFragment : Fragment() {
     private lateinit var mercadonaContainer: LinearLayout
     private lateinit var carrefourContainer: LinearLayout
 
-    // Lista única de productos con su cantidad
-    private val productList = mutableListOf<Pair<String, Int>>()
-
-    // Precios simulados por producto
-    private val prices = mapOf(
-        "Tomates" to 1.30,
-        "Leche" to 1.10,
-        "Pan" to 1.40
-    )
+    private val productList = mutableListOf<ProductoConPrecio>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -37,22 +37,86 @@ class CreateListFragment : Fragment() {
         carrefourContainer = view.findViewById(R.id.carrefour_container)
 
         btnAdd.setOnClickListener {
-            val product = etProduct.text.toString().trim().replaceFirstChar { it.uppercase() }
-            val quantity = etQuantity.text.toString().toIntOrNull() ?: 1
+            val nombre = etProduct.text.toString().trim().replaceFirstChar { it.uppercase() }
+            val cantidad = etQuantity.text.toString().toIntOrNull() ?: 1
 
-            if (product.isNotEmpty()) {
-                productList.add(product to quantity)
-                updateSupermarketViews()
+            if (nombre.isNotEmpty()) {
+                val db = Firebase.firestore
+                db.collection("productos")
+                    .whereEqualTo("nombre", nombre)
+                    .get()
+                    .addOnSuccessListener { documents ->
+                        if (!documents.isEmpty) {
+                            val doc = documents.first()
+                            val idProducto = doc.id
 
-                // ⬇️ OCULTAR TECLADO
-                val imm = requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-                imm.hideSoftInputFromWindow(view?.windowToken, 0)
+                            val precios = mutableMapOf<String, Double>()
+                            val supermercados = listOf("mercadona", "carrefour")
 
-                etProduct.text.clear()
-                etQuantity.text.clear()
+                            var fetched = 0
+                            for (s in supermercados) {
+                                db.collection("productos")
+                                    .document(idProducto)
+                                    .collection("precios")
+                                    .document(s)
+                                    .get()
+                                    .addOnSuccessListener { precioDoc ->
+                                        val precio = precioDoc.getDouble("precio")
+                                        if (precio != null) {
+                                            precios[s] = precio
+                                        }
+                                        fetched++
+                                        if (fetched == supermercados.size) {
+                                            if (precios.size == supermercados.size) {
+                                                productList.add(
+                                                    ProductoConPrecio(
+                                                        nombre,
+                                                        cantidad,
+                                                        precios["mercadona"] ?: 0.0,
+                                                        precios["carrefour"] ?: 0.0
+                                                    )
+                                                )
+
+                                                updateSupermarketViews()
+                                                etProduct.text.clear()
+                                                etQuantity.text.clear()
+
+                                                val imm = requireContext().getSystemService(
+                                                    android.content.Context.INPUT_METHOD_SERVICE
+                                                ) as android.view.inputmethod.InputMethodManager
+                                                imm.hideSoftInputFromWindow(view?.windowToken, 0)
+                                            }
+                                        }
+                                    }
+                            }
+                        } else {
+                            Toast.makeText(requireContext(), "Producto no encontrado", Toast.LENGTH_SHORT).show()
+                        }
+                    }
             }
         }
 
+        etProduct.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                val input = s.toString().trim().replaceFirstChar { it.uppercase() }
+
+                if (input.length >= 1) {
+                    Firebase.firestore.collection("productos")
+                        .orderBy("nombre")
+                        .startAt(input)
+                        .endAt(input + "\uf8ff")
+                        .get()
+                        .addOnSuccessListener { result ->
+                            val sugerencias = result.mapNotNull { it.getString("nombre") }
+                            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, sugerencias)
+                            (etProduct as AutoCompleteTextView).setAdapter(adapter)
+                            (etProduct as AutoCompleteTextView).showDropDown()
+                        }
+                }
+            }
+        })
 
         return view
     }
@@ -73,24 +137,21 @@ class CreateListFragment : Fragment() {
         container.addView(header)
 
         var total = 0.0
-        val productosConPrecio = mutableListOf<Pair<String, Int>>() // para luego guardar
 
-        for ((product, quantity) in productList) {
-            val unitPrice = (0..500).random() / 100.0 // precio aleatorio entre 0.00 y 5.00 €
-            val totalPrice = unitPrice * quantity
-
-            productosConPrecio.add(product to quantity) // seguimos usando productList como base
+        for (producto in productList) {
+            val unitPrice = if (name == "Mercadona") producto.precioMercadona else producto.precioCarrefour
+            val totalPrice = unitPrice * producto.cantidad
 
             val itemView = layoutInflater.inflate(R.layout.item_producto, container, false)
             val nombreProducto = itemView.findViewById<TextView>(R.id.tv_nombre_producto)
             val precioProducto = itemView.findViewById<TextView>(R.id.tv_precio_producto)
             val btnBorrar = itemView.findViewById<Button>(R.id.btn_borrar)
 
-            nombreProducto.text = product
+            nombreProducto.text = producto.nombre
             precioProducto.text = "Precio: %.2f€".format(totalPrice)
 
             btnBorrar.setOnClickListener {
-                productList.remove(product to quantity)
+                productList.remove(producto)
                 updateSupermarketViews()
             }
 
@@ -113,18 +174,17 @@ class CreateListFragment : Fragment() {
             setOnClickListener {
                 val viewModel = (activity as MainActivity).shoppingListViewModel
 
-                // Generamos los productos con precio aleatorio para este súper
                 val productos = productList.map {
-                    com.example.smartlist.model.Producto(
-                        name = it.first,
-                        quantity = it.second,
-                        unitPrice = (0..500).random() / 100.0
+                    Producto(
+                        name = it.nombre,
+                        quantity = it.cantidad,
+                        unitPrice = if (name == "Mercadona") it.precioMercadona else it.precioCarrefour
                     )
                 }
 
                 viewModel.addList(
                     supermarket = name,
-                    products = productos.map { it.name to it.quantity }
+                    productos = productos
                 )
 
                 parentFragmentManager.beginTransaction()
@@ -142,5 +202,4 @@ class CreateListFragment : Fragment() {
         container.addView(totalText)
         container.addView(btnAddList)
     }
-
 }

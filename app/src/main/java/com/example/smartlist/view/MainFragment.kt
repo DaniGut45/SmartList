@@ -8,7 +8,6 @@ import androidx.fragment.app.commit
 import androidx.fragment.app.replace
 import androidx.recyclerview.widget.RecyclerView
 import com.example.smartlist.R
-import com.example.smartlist.model.Producto
 import com.example.smartlist.model.ShoppingList
 import com.example.smartlist.view.adapters.ListAdapter
 
@@ -29,7 +28,6 @@ class MainFragment : Fragment() {
         adapter = ListAdapter(listas)
         recyclerView.adapter = adapter
 
-
         val viewModel = (activity as MainActivity).shoppingListViewModel
 
         viewModel.shoppingLists.observe(viewLifecycleOwner) { newList ->
@@ -37,30 +35,6 @@ class MainFragment : Fragment() {
             listas.addAll(newList)
             adapter.notifyDataSetChanged()
         }
-
-        // ⚠️ Datos de prueba (puedes quitarlos luego)
-        listas.add(
-            ShoppingList(
-                dateTime = "Hoy - 14:30",
-                storeName = "Mercadona",
-                products = listOf(
-                    Producto("Tomates", 2, 1.30),
-                    Producto("Pan", 1, 1.20)
-                )
-            )
-        )
-
-        listas.add(
-            ShoppingList(
-                dateTime = "Hoy - 15:10",
-                storeName = "Carrefour",
-                products = listOf(
-                    Producto("Leche", 3, 1.10)
-                )
-            )
-        )
-
-        adapter.notifyDataSetChanged()
 
         // Botón para ir a crear lista
         view.findViewById<Button>(R.id.btn_create_list).setOnClickListener {
@@ -75,7 +49,6 @@ class MainFragment : Fragment() {
                 .addToBackStack(null)
                 .commit()
         }
-
 
         return view
     }

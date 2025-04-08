@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "51865534785",
+    "project_id": "smartlist-5cfd9",
+    "storage_bucket": "smartlist-5cfd9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:51865534785:android:529bd59deb7b666416a1c0",
+        "android_client_info": {
+          "package_name": "com.example.smartlist"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjlCuenlvEqaXeVHqiA7TXq82DdNEgQu0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

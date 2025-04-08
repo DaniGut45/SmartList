@@ -35,18 +35,6 @@
         <EditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Introduce tu nombre de usuario"
-            android:background="@drawable/rounded_input_bg"
-            android:padding="12dp"
-            android:layout_marginTop="16dp"
-            android:inputType="textPersonName"
-            android:textColor="@color/dark_goldenrod"
-            android:textColorHint="@color/dark_goldenrod"
-            android:fontFamily="@font/plus_jakarta_sans"/>
-
-        <EditText
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:hint="Introduce tu contraseña"
             android:background="@drawable/rounded_input_bg"
             android:padding="12dp"

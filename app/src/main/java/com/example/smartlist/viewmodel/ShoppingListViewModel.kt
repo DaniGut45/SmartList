@@ -13,25 +13,22 @@ class ShoppingListViewModel : ViewModel() {
     private val _shoppingLists = MutableLiveData<MutableList<ShoppingList>>(mutableListOf())
     val shoppingLists: LiveData<MutableList<ShoppingList>> = _shoppingLists
 
-    fun addList(supermarket: String, products: List<Pair<String, Int>>) {
+    // Este método ahora recibe productos con precios reales
+    fun addList(supermarket: String, productos: List<Producto>) {
         val sdf = SimpleDateFormat("dd/MM/yyyy - HH:mm", Locale.getDefault())
         val now = sdf.format(Date())
 
-        val productList = products.map {
-            Producto(
-                name = it.first,
-                quantity = it.second,
-                unitPrice = (0..500).random() / 100.0
-            )
-        }
+        val totalLista = productos.sumOf { it.unitPrice * it.quantity }
 
-        val newList = ShoppingList(
+        val nuevaLista = ShoppingList(
             dateTime = now,
             storeName = supermarket,
-            products = productList
+            products = productos,
+            isExpanded = false,
+            total = totalLista
         )
 
-        _shoppingLists.value?.add(newList)
+        _shoppingLists.value?.add(nuevaLista)
         _shoppingLists.postValue(_shoppingLists.value)
     }
 
@@ -39,41 +36,28 @@ class ShoppingListViewModel : ViewModel() {
         _shoppingLists.value = mutableListOf()
     }
 
-    fun addSupermarketLists(products: List<Pair<String, Int>>) {
+    // Si todavía quieres añadir Mercadona y Carrefour a la vez, puedes mantener este método (opcional)
+    fun addSupermarketLists(mercadona: List<Producto>, carrefour: List<Producto>) {
         val sdf = SimpleDateFormat("dd/MM/yyyy - HH:mm", Locale.getDefault())
         val now = sdf.format(Date())
 
-        val mercadonaList = products.map {
-            Producto( // en lugar de Product
-                name = it.first,
-                quantity = it.second,
-                unitPrice = (0..500).random() / 100.0
-            )
-        }
-
-
-        val carrefourList = products.map {
-            Producto(
-                name = it.first,
-                quantity = it.second,
-                unitPrice = (0..500).random() / 100.0
-            )
-        }
-
-        val mercadona = ShoppingList(
+        val listaMercadona = ShoppingList(
             dateTime = now,
             storeName = "Mercadona",
-            products = mercadonaList
+            products = mercadona,
+            isExpanded = false,
+            total = mercadona.sumOf { it.unitPrice * it.quantity }
         )
 
-        val carrefour = ShoppingList(
+        val listaCarrefour = ShoppingList(
             dateTime = now,
             storeName = "Carrefour",
-            products = carrefourList
+            products = carrefour,
+            isExpanded = false,
+            total = carrefour.sumOf { it.unitPrice * it.quantity }
         )
 
-        _shoppingLists.value?.addAll(listOf(mercadona, carrefour))
+        _shoppingLists.value?.addAll(listOf(listaMercadona, listaCarrefour))
         _shoppingLists.postValue(_shoppingLists.value)
     }
-
 }

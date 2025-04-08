@@ -27,7 +27,7 @@
             android:orientation="horizontal"
             android:layout_marginBottom="16dp">
 
-            <EditText
+            <AutoCompleteTextView
                 android:id="@+id/et_product"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -35,9 +35,10 @@
                 android:hint="Introduce un producto"
                 android:background="@drawable/rounded_input_bg"
                 android:padding="12dp"
-                android:textColor="@color/dark_goldenrod"
+                android:textColor="@color/smoky_black"
                 android:textColorHint="@color/dark_goldenrod"
-                android:fontFamily="@font/plus_jakarta_sans" />
+                android:inputType="text"
+                android:dropDownWidth="match_parent" />
 
 
             <Space android:layout_width="8dp" android:layout_height="wrap_content" />
