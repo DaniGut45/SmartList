@@ -8,11 +8,16 @@ import androidx.fragment.app.commit
 import androidx.fragment.app.replace
 import androidx.recyclerview.widget.RecyclerView
 import com.example.smartlist.R
+import com.example.smartlist.model.Producto
 import com.example.smartlist.model.ShoppingList
 import com.example.smartlist.view.adapters.ListAdapter
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.firestore
 
 class MainFragment : Fragment() {
 
+    val userId = FirebaseAuth.getInstance().currentUser?.uid
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ListAdapter
     private val listas = mutableListOf<ShoppingList>()
@@ -50,6 +55,38 @@ class MainFragment : Fragment() {
                 .commit()
         }
 
+
+        if (userId != null) {
+            Firebase.firestore.collection("usuarios")
+                .document(userId)
+                .collection("listas")
+                .get()
+                .addOnSuccessListener { listasDocs ->
+                    listas.clear()
+
+                    listasDocs.forEach { doc ->
+                        val dateTime = doc.getString("dateTime") ?: ""
+                        val store = doc.getString("storeName") ?: ""
+                        val total = doc.getDouble("total") ?: 0.0
+
+                        // Traemos la subcolección de productos
+                        doc.reference.collection("productos").get()
+                            .addOnSuccessListener { productosDocs ->
+                                val productos = productosDocs.map {
+                                    Producto(
+                                        it.getString("name") ?: "",
+                                        (it.getLong("quantity") ?: 0).toInt(),
+                                        it.getDouble("unitPrice") ?: 0.0
+                                    )
+                                }
+
+                                val lista = ShoppingList(dateTime, store, productos, false, total)
+                                listas.add(lista)
+                                adapter.notifyDataSetChanged()
+                            }
+                    }
+                }
+        }
         return view
     }
 }

@@ -22,6 +22,7 @@
             android:fontFamily="@font/plus_jakarta_sans" />
 
         <EditText
+            android:id="@+id/et_email"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Introduce tu correo"
@@ -33,6 +34,7 @@
             android:inputType="textEmailAddress" />
 
         <EditText
+            android:id="@+id/et_password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Introduce tu contraseña"
@@ -64,31 +66,43 @@
             android:layout_marginTop="24dp"
             android:fontFamily="@font/plus_jakarta_sans" />
 
-        <!-- Botón de Google -->
         <LinearLayout
+            android:id="@+id/google_login_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:padding="12dp"
             android:layout_marginTop="12dp"
             android:background="@drawable/rounded_button_bg"
-            android:gravity="center"
-            android:layout_gravity="center_horizontal">
+            android:gravity="center">
 
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@drawable/ic_google"
+                android:src="@drawable/logo_google"
                 android:layout_marginEnd="12dp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Registrarse con Google"
+                android:text="Iniciar sesión con Google"
                 android:textColor="@color/smoky_black"
                 android:fontFamily="@font/plus_jakarta_sans"
                 android:textStyle="bold" />
         </LinearLayout>
+
+
+        <TextView
+            android:id="@+id/tv_to_register"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="¿No tienes cuenta? Regístrate"
+            android:textColor="@color/smoky_black"
+            android:textSize="12sp"
+            android:layout_marginTop="16dp"
+            android:fontFamily="@font/plus_jakarta_sans"
+            android:textStyle="bold"
+            android:layout_gravity="center_horizontal" />
 
     </LinearLayout>
 </ScrollView>

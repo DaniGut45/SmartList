@@ -7,6 +7,9 @@ import com.example.smartlist.model.Producto
 import com.example.smartlist.model.ShoppingList
 import java.text.SimpleDateFormat
 import java.util.*
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.firestore.ktx.firestore
 
 class ShoppingListViewModel : ViewModel() {
 
@@ -17,19 +20,41 @@ class ShoppingListViewModel : ViewModel() {
     fun addList(supermarket: String, productos: List<Producto>) {
         val sdf = SimpleDateFormat("dd/MM/yyyy - HH:mm", Locale.getDefault())
         val now = sdf.format(Date())
+        val total = productos.sumOf { it.unitPrice * it.quantity }
 
-        val totalLista = productos.sumOf { it.unitPrice * it.quantity }
-
-        val nuevaLista = ShoppingList(
+        val list = ShoppingList(
             dateTime = now,
             storeName = supermarket,
             products = productos,
-            isExpanded = false,
-            total = totalLista
+            total = total
         )
 
-        _shoppingLists.value?.add(nuevaLista)
+        _shoppingLists.value?.add(list)
         _shoppingLists.postValue(_shoppingLists.value)
+
+        // Guardar en Firestore si está logueado
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val db = Firebase.firestore
+
+        val listData = mapOf(
+            "dateTime" to now,
+            "storeName" to supermarket,
+            "total" to total
+        )
+
+        db.collection("usuarios").document(userId)
+            .collection("listas").add(listData)
+            .addOnSuccessListener { docRef ->
+                // Añadir productos a subcolección
+                productos.forEach { producto ->
+                    val productoMap = mapOf(
+                        "name" to producto.name,
+                        "quantity" to producto.quantity,
+                        "unitPrice" to producto.unitPrice
+                    )
+                    docRef.collection("productos").add(productoMap)
+                }
+            }
     }
 
     fun clear() {

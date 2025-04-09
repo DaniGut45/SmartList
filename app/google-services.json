@@ -12,7 +12,20 @@
           "package_name": "com.example.smartlist"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "51865534785-jlm4ec1t95ssdvtl5jcv8kpncsah8ikf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.smartlist",
+            "certificate_hash": "78ead3e4937e73904124e2689fc9f92d0aee2cfe"
+          }
+        },
+        {
+          "client_id": "51865534785-q06g5hl7gvfnvd1t4valkrh9tut65tpg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDjlCuenlvEqaXeVHqiA7TXq82DdNEgQu0"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "51865534785-q06g5hl7gvfnvd1t4valkrh9tut65tpg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

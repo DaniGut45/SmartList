@@ -22,6 +22,7 @@
             android:fontFamily="@font/plus_jakarta_sans" />
 
         <EditText
+            android:id="@+id/et_email"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Introduce tu correo"
@@ -30,9 +31,24 @@
             android:inputType="textEmailAddress"
             android:textColor="@color/dark_goldenrod"
             android:textColorHint="@color/dark_goldenrod"
-            android:fontFamily="@font/plus_jakarta_sans"/>
+            android:fontFamily="@font/plus_jakarta_sans" />
+
+        <!-- CAMPO NUEVO: nombre de usuario -->
+        <EditText
+            android:id="@+id/et_username"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Introduce tu nombre de usuario"
+            android:background="@drawable/rounded_input_bg"
+            android:padding="12dp"
+            android:layout_marginTop="16dp"
+            android:inputType="textPersonName"
+            android:textColor="@color/dark_goldenrod"
+            android:textColorHint="@color/dark_goldenrod"
+            android:fontFamily="@font/plus_jakarta_sans" />
 
         <EditText
+            android:id="@+id/et_password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Introduce tu contraseña"
@@ -42,7 +58,8 @@
             android:layout_marginTop="16dp"
             android:textColor="@color/dark_goldenrod"
             android:textColorHint="@color/dark_goldenrod"
-            android:fontFamily="@font/plus_jakarta_sans"/>
+            android:fontFamily="@font/plus_jakarta_sans" />
+
 
         <Button
             android:id="@+id/btn_register"
@@ -78,10 +95,11 @@
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@drawable/ic_google"
+                android:src="@drawable/logo_google"
                 android:layout_marginEnd="12dp" />
 
             <TextView
+                android:id="@+id/btn_google_register"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Registrarse con Google"

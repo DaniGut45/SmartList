@@ -13,17 +13,18 @@ import com.google.firebase.ktx.Firebase
 import android.widget.ArrayAdapter
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.inputmethod.InputMethodManager
+import android.content.Context
 import com.example.smartlist.model.ProductoConPrecio
-
 
 class CreateListFragment : Fragment() {
 
-    private lateinit var etProduct: EditText
+    private lateinit var etProduct: AutoCompleteTextView
     private lateinit var etQuantity: EditText
     private lateinit var mercadonaContainer: LinearLayout
     private lateinit var carrefourContainer: LinearLayout
-
     private val productList = mutableListOf<ProductoConPrecio>()
+    private var shouldSkipAutoComplete = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -35,6 +36,48 @@ class CreateListFragment : Fragment() {
         val btnAdd = view.findViewById<Button>(R.id.btn_add_product)
         mercadonaContainer = view.findViewById(R.id.mercadona_container)
         carrefourContainer = view.findViewById(R.id.carrefour_container)
+
+        // Estilo del dropdown
+        etProduct.dropDownWidth = resources.getDimensionPixelSize(R.dimen.autocomplete_dropdown_width)
+        etProduct.dropDownHorizontalOffset = 32
+
+        // AutoComplete click listener para ocultar todo
+        etProduct.setOnItemClickListener { parent, view, position, id ->
+            val selected = parent.getItemAtPosition(position).toString()
+            shouldSkipAutoComplete = true
+            etProduct.setText(selected)
+            etProduct.dismissDropDown()
+            etProduct.clearFocus()
+
+            val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.hideSoftInputFromWindow(etProduct.windowToken, 0)
+        }
+
+        etProduct.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                if (shouldSkipAutoComplete) {
+                    shouldSkipAutoComplete = false
+                    return
+                }
+
+                val input = s.toString().trim().replaceFirstChar { it.uppercase() }
+                if (input.length >= 1) {
+                    Firebase.firestore.collection("productos")
+                        .orderBy("nombre")
+                        .startAt(input)
+                        .endAt(input + "\uf8ff")
+                        .get()
+                        .addOnSuccessListener { result ->
+                            val sugerencias = result.mapNotNull { it.getString("nombre") }
+                            val adapter = ArrayAdapter(requireContext(), R.layout.item_dropdown, sugerencias)
+                            etProduct.setAdapter(adapter)
+                            etProduct.showDropDown()
+                        }
+                }
+            }
+        })
 
         btnAdd.setOnClickListener {
             val nombre = etProduct.text.toString().trim().replaceFirstChar { it.uppercase() }
@@ -49,7 +92,6 @@ class CreateListFragment : Fragment() {
                         if (!documents.isEmpty) {
                             val doc = documents.first()
                             val idProducto = doc.id
-
                             val precios = mutableMapOf<String, Double>()
                             val supermercados = listOf("mercadona", "carrefour")
 
@@ -62,30 +104,23 @@ class CreateListFragment : Fragment() {
                                     .get()
                                     .addOnSuccessListener { precioDoc ->
                                         val precio = precioDoc.getDouble("precio")
-                                        if (precio != null) {
-                                            precios[s] = precio
-                                        }
+                                        if (precio != null) precios[s] = precio
                                         fetched++
-                                        if (fetched == supermercados.size) {
-                                            if (precios.size == supermercados.size) {
-                                                productList.add(
-                                                    ProductoConPrecio(
-                                                        nombre,
-                                                        cantidad,
-                                                        precios["mercadona"] ?: 0.0,
-                                                        precios["carrefour"] ?: 0.0
-                                                    )
+                                        if (fetched == supermercados.size && precios.size == supermercados.size) {
+                                            productList.add(
+                                                ProductoConPrecio(
+                                                    nombre,
+                                                    cantidad,
+                                                    precios["mercadona"] ?: 0.0,
+                                                    precios["carrefour"] ?: 0.0
                                                 )
+                                            )
+                                            updateSupermarketViews()
+                                            etProduct.text.clear()
+                                            etQuantity.text.clear()
 
-                                                updateSupermarketViews()
-                                                etProduct.text.clear()
-                                                etQuantity.text.clear()
-
-                                                val imm = requireContext().getSystemService(
-                                                    android.content.Context.INPUT_METHOD_SERVICE
-                                                ) as android.view.inputmethod.InputMethodManager
-                                                imm.hideSoftInputFromWindow(view?.windowToken, 0)
-                                            }
+                                            val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                                            imm.hideSoftInputFromWindow(view?.windowToken, 0)
                                         }
                                     }
                             }
@@ -95,28 +130,6 @@ class CreateListFragment : Fragment() {
                     }
             }
         }
-
-        etProduct.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                val input = s.toString().trim().replaceFirstChar { it.uppercase() }
-
-                if (input.length >= 1) {
-                    Firebase.firestore.collection("productos")
-                        .orderBy("nombre")
-                        .startAt(input)
-                        .endAt(input + "\uf8ff")
-                        .get()
-                        .addOnSuccessListener { result ->
-                            val sugerencias = result.mapNotNull { it.getString("nombre") }
-                            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, sugerencias)
-                            (etProduct as AutoCompleteTextView).setAdapter(adapter)
-                            (etProduct as AutoCompleteTextView).showDropDown()
-                        }
-                }
-            }
-        })
 
         return view
     }
@@ -137,20 +150,14 @@ class CreateListFragment : Fragment() {
         container.addView(header)
 
         var total = 0.0
-
         for (producto in productList) {
             val unitPrice = if (name == "Mercadona") producto.precioMercadona else producto.precioCarrefour
             val totalPrice = unitPrice * producto.cantidad
 
             val itemView = layoutInflater.inflate(R.layout.item_producto, container, false)
-            val nombreProducto = itemView.findViewById<TextView>(R.id.tv_nombre_producto)
-            val precioProducto = itemView.findViewById<TextView>(R.id.tv_precio_producto)
-            val btnBorrar = itemView.findViewById<Button>(R.id.btn_borrar)
-
-            nombreProducto.text = producto.nombre
-            precioProducto.text = "Precio: %.2f€".format(totalPrice)
-
-            btnBorrar.setOnClickListener {
+            itemView.findViewById<TextView>(R.id.tv_nombre_producto).text = producto.nombre
+            itemView.findViewById<TextView>(R.id.tv_precio_producto).text = "Precio: %.2f€".format(totalPrice)
+            itemView.findViewById<Button>(R.id.btn_borrar).setOnClickListener {
                 productList.remove(producto)
                 updateSupermarketViews()
             }
@@ -173,7 +180,6 @@ class CreateListFragment : Fragment() {
 
             setOnClickListener {
                 val viewModel = (activity as MainActivity).shoppingListViewModel
-
                 val productos = productList.map {
                     Producto(
                         name = it.nombre,
@@ -182,16 +188,10 @@ class CreateListFragment : Fragment() {
                     )
                 }
 
-                viewModel.addList(
-                    supermarket = name,
-                    productos = productos
-                )
+                viewModel.addList(supermarket = name, productos = productos)
 
                 parentFragmentManager.beginTransaction()
-                    .setCustomAnimations(
-                        R.anim.slide_in_left,
-                        R.anim.slide_out_right
-                    )
+                    .setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_right)
                     .replace(R.id.fragmentContainer, MainFragment())
                     .commit()
 

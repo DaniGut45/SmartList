@@ -15,6 +15,7 @@ import com.example.smartlist.utils.SessionManager
 import com.example.smartlist.view.RegisterFragment
 import com.example.smartlist.view.UserFragment
 import com.example.smartlist.viewmodel.ShoppingListViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 
 class MainActivity : AppCompatActivity() {
@@ -44,11 +45,23 @@ class MainActivity : AppCompatActivity() {
 
 
         if (savedInstanceState == null) {
-            supportFragmentManager.commit {
-                replace<MainFragment>(R.id.fragmentContainer)
+            val currentUser = FirebaseAuth.getInstance().currentUser
+
+            if (currentUser != null) {
+                SessionManager.isLoggedIn = true
+                supportFragmentManager.commit {
+                    replace<MainFragment>(R.id.fragmentContainer)
+                }
+                updateBottomNavColors("home")
+            } else {
+                SessionManager.isLoggedIn = false
+                supportFragmentManager.commit {
+                    replace<RegisterFragment>(R.id.fragmentContainer)
+                }
+                updateBottomNavColors("profile")
             }
-            updateBottomNavColors("home")
         }
+
 
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.fragmentContainer)) { v, insets ->

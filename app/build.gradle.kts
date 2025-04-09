@@ -46,8 +46,16 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    //Implementación para Firebase
-    implementation(libs.firebase.bom)
-    implementation ("com.google.firebase:firebase-analytics:21.5.0")
-    implementation ("com.google.firebase:firebase-firestore-ktx:25.1.3")
+    // Firebase BOM
+    implementation(platform(libs.firebase.bom))
+
+    // Módulos sin versión
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.auth.ktx)
+    implementation(libs.firebase.firestore.ktx)
+
+    // Firebase Auth + Google Sign In
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
+
+
 }

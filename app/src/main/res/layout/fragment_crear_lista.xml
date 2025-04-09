@@ -32,28 +32,27 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="Introduce un producto"
                 android:background="@drawable/rounded_input_bg"
+                android:dropDownWidth="match_parent"
+                android:hint="Introduce un\nproducto"
+                android:inputType="text"
                 android:padding="12dp"
                 android:textColor="@color/smoky_black"
-                android:textColorHint="@color/dark_goldenrod"
-                android:inputType="text"
-                android:dropDownWidth="match_parent" />
-
-
-            <Space android:layout_width="8dp" android:layout_height="wrap_content" />
+                android:textColorHint="@color/dark_goldenrod" />
 
             <EditText
                 android:id="@+id/et_quantity"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="Introduce una cantidad"
+                android:layout_marginStart="8dp"
+                android:hint="Introduce una\ncantidad"
                 android:background="@drawable/rounded_input_bg"
                 android:padding="12dp"
                 android:textColor="@color/dark_goldenrod"
                 android:textColorHint="@color/dark_goldenrod"
                 android:fontFamily="@font/plus_jakarta_sans"/>
+
         </LinearLayout>
 
         <Button
