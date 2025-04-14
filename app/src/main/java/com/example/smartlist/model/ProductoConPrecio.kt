@@ -4,5 +4,6 @@ data class ProductoConPrecio(
     val nombre: String,
     val cantidad: Int,
     val precioMercadona: Double,
-    val precioCarrefour: Double
+    val precioCarrefour: Double,
+    val precioLidl: Double
 )

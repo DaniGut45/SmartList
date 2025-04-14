@@ -1,5 +1,6 @@
 package com.example.smartlist.view
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.*
 import android.widget.*
@@ -23,9 +24,11 @@ class CreateListFragment : Fragment() {
     private lateinit var etQuantity: EditText
     private lateinit var mercadonaContainer: LinearLayout
     private lateinit var carrefourContainer: LinearLayout
+    private lateinit var lidlContainer: LinearLayout
     private val productList = mutableListOf<ProductoConPrecio>()
     private var shouldSkipAutoComplete = false
 
+    @SuppressLint("MissingInflatedId")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
@@ -36,6 +39,8 @@ class CreateListFragment : Fragment() {
         val btnAdd = view.findViewById<Button>(R.id.btn_add_product)
         mercadonaContainer = view.findViewById(R.id.mercadona_container)
         carrefourContainer = view.findViewById(R.id.carrefour_container)
+        lidlContainer = view.findViewById(R.id.lidl_container)
+
 
         // Estilo del dropdown
         etProduct.dropDownWidth = resources.getDimensionPixelSize(R.dimen.autocomplete_dropdown_width)
@@ -93,37 +98,34 @@ class CreateListFragment : Fragment() {
                             val doc = documents.first()
                             val idProducto = doc.id
                             val precios = mutableMapOf<String, Double>()
-                            val supermercados = listOf("mercadona", "carrefour")
+                            db.collection("productos")
+                                .document(idProducto)
+                                .get()
+                                .addOnSuccessListener { doc ->
+                                    val supermercadoMap = doc.get("supermercado") as? Map<String, Map<String, Double>>
+                                    if (supermercadoMap != null) {
+                                        val precioMercadona = supermercadoMap["mercadona"]?.get("precio") ?: 0.0
+                                        val precioCarrefour = supermercadoMap["carrefour"]?.get("precio") ?: 0.0
+                                        val precioLidl = supermercadoMap["lidl"]?.get("precio") ?: 0.0
 
-                            var fetched = 0
-                            for (s in supermercados) {
-                                db.collection("productos")
-                                    .document(idProducto)
-                                    .collection("precios")
-                                    .document(s)
-                                    .get()
-                                    .addOnSuccessListener { precioDoc ->
-                                        val precio = precioDoc.getDouble("precio")
-                                        if (precio != null) precios[s] = precio
-                                        fetched++
-                                        if (fetched == supermercados.size && precios.size == supermercados.size) {
-                                            productList.add(
-                                                ProductoConPrecio(
-                                                    nombre,
-                                                    cantidad,
-                                                    precios["mercadona"] ?: 0.0,
-                                                    precios["carrefour"] ?: 0.0
-                                                )
+                                        productList.add(
+                                            ProductoConPrecio(
+                                                nombre,
+                                                cantidad,
+                                                precioMercadona,
+                                                precioCarrefour,
+                                                precioLidl
                                             )
-                                            updateSupermarketViews()
-                                            etProduct.text.clear()
-                                            etQuantity.text.clear()
+                                        )
+                                        updateSupermarketViews()
+                                        etProduct.text.clear()
+                                        etQuantity.text.clear()
 
-                                            val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                                            imm.hideSoftInputFromWindow(view?.windowToken, 0)
-                                        }
+                                        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                                        imm.hideSoftInputFromWindow(view?.windowToken, 0)
                                     }
-                            }
+                                }
+
                         } else {
                             Toast.makeText(requireContext(), "Producto no encontrado", Toast.LENGTH_SHORT).show()
                         }
@@ -137,6 +139,7 @@ class CreateListFragment : Fragment() {
     private fun updateSupermarketViews() {
         updateSupermarketView("Mercadona", mercadonaContainer)
         updateSupermarketView("Carrefour", carrefourContainer)
+        updateSupermarketView("Lidl", lidlContainer)
     }
 
     private fun updateSupermarketView(name: String, container: LinearLayout) {
@@ -144,10 +147,14 @@ class CreateListFragment : Fragment() {
 
         val header = layoutInflater.inflate(R.layout.supermarket_header, container, false)
         header.findViewById<TextView>(R.id.tv_super_title).text = name
-        header.findViewById<ImageView>(R.id.iv_logo).setImageResource(
-            if (name == "Mercadona") R.drawable.logo_mercadona else R.drawable.logo_carrefour
-        )
-        container.addView(header)
+        val logo = when (name.lowercase()) {
+            "mercadona" -> R.drawable.logo_mercadona
+            "carrefour" -> R.drawable.logo_carrefour
+            "lidl" -> R.drawable.logo_lidl
+            else -> R.drawable.logo_app // Por si acaso
+        }
+        header.findViewById<ImageView>(R.id.iv_logo).setImageResource(logo)
+
 
         var total = 0.0
         for (producto in productList) {
