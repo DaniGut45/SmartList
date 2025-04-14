@@ -44,7 +44,7 @@ class CreateListFragment : Fragment() {
 
         // Estilo del dropdown
         etProduct.dropDownWidth = resources.getDimensionPixelSize(R.dimen.autocomplete_dropdown_width)
-        etProduct.dropDownHorizontalOffset = 32
+        etProduct.dropDownHorizontalOffset = 64
 
         // AutoComplete click listener para ocultar todo
         etProduct.setOnItemClickListener { parent, view, position, id ->
@@ -155,6 +155,14 @@ class CreateListFragment : Fragment() {
         }
         header.findViewById<ImageView>(R.id.iv_logo).setImageResource(logo)
 
+        val container = when (name.lowercase()) {
+            "mercadona" -> view?.findViewById<LinearLayout>(R.id.mercadona_container)
+            "carrefour" -> view?.findViewById<LinearLayout>(R.id.carrefour_container)
+            "lidl" -> view?.findViewById<LinearLayout>(R.id.lidl_container)
+            else -> null
+        }
+
+        container?.addView(header)
 
         var total = 0.0
         for (producto in productList) {
@@ -170,7 +178,9 @@ class CreateListFragment : Fragment() {
             }
 
             total += totalPrice
-            container.addView(itemView)
+            if (container != null) {
+                container.addView(itemView)
+            }
         }
 
         val totalText = TextView(requireContext()).apply {
@@ -206,7 +216,10 @@ class CreateListFragment : Fragment() {
             }
         }
 
-        container.addView(totalText)
-        container.addView(btnAddList)
+        if (container != null) {
+            container.addView(totalText)
+            container.addView(btnAddList)
+        }
+
     }
 }
