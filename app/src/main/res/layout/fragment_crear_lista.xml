@@ -27,18 +27,35 @@
             android:orientation="horizontal"
             android:layout_marginBottom="16dp">
 
-            <AutoCompleteTextView
-                android:id="@+id/et_product"
+            <FrameLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@drawable/rounded_input_bg"
-                android:dropDownWidth="match_parent"
-                android:hint="Introduce un\nproducto"
-                android:inputType="text"
-                android:padding="12dp"
-                android:textColor="@color/smoky_black"
-                android:textColorHint="@color/dark_goldenrod" />
+                android:layout_weight="1">
+
+                <AutoCompleteTextView
+                    android:id="@+id/et_product"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/rounded_input_bg"
+                    android:dropDownWidth="match_parent"
+                    android:hint="Introduce un\nproducto"
+                    android:inputType="text"
+                    android:padding="12dp"
+                    android:paddingEnd="40dp"
+                    android:textColor="@color/smoky_black"
+                    android:textColorHint="@color/dark_goldenrod"
+                    android:fontFamily="@font/plus_jakarta_sans" />
+
+                <ProgressBar
+                    android:id="@+id/progress_loader"
+                    style="?android:attr/progressBarStyleSmall"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="end|center_vertical"
+                    android:layout_marginEnd="12dp"
+                    android:visibility="gone" />
+            </FrameLayout>
+
 
             <EditText
                 android:id="@+id/et_quantity"

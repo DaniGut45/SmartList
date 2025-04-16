@@ -27,6 +27,37 @@ class UserFragment : Fragment() {
         // 🔐 Obtener ID del usuario actual
         val userId = FirebaseAuth.getInstance().currentUser?.uid
 
+        val tvNumListas = view.findViewById<TextView>(R.id.tv_num_listas)
+
+        if (userId != null) {
+            val userDocRef = Firebase.firestore.collection("usuarios").document(userId)
+
+            // Cargar nombre
+            userDocRef.get()
+                .addOnSuccessListener { document ->
+                    val nombre = document.getString("nombre")
+                    tvUsername.text = nombre ?: "Usuario desconocido"
+                }
+                .addOnFailureListener {
+                    tvUsername.text = "Error al cargar usuario"
+                }
+
+            // Contar listas del usuario
+            userDocRef.collection("listas")
+                .get()
+                .addOnSuccessListener { snapshot ->
+                    val cantidadListas = snapshot.size()
+                    tvNumListas.text = "Número de listas: $cantidadListas"
+                }
+                .addOnFailureListener {
+                    tvNumListas.text = "Error al cargar número de listas"
+                }
+        } else {
+            tvUsername.text = "No hay sesión activa"
+            tvNumListas.text = ""
+        }
+
+
         if (userId != null) {
             Firebase.firestore.collection("usuarios")
                 .document(userId)

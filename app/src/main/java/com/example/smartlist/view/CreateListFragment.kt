@@ -16,6 +16,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.inputmethod.InputMethodManager
 import android.content.Context
+import android.graphics.Typeface
 import com.example.smartlist.model.ProductoConPrecio
 
 class CreateListFragment : Fragment() {
@@ -27,6 +28,7 @@ class CreateListFragment : Fragment() {
     private lateinit var lidlContainer: LinearLayout
     private val productList = mutableListOf<ProductoConPrecio>()
     private var shouldSkipAutoComplete = false
+
 
     @SuppressLint("MissingInflatedId")
     override fun onCreateView(
@@ -41,10 +43,15 @@ class CreateListFragment : Fragment() {
         carrefourContainer = view.findViewById(R.id.carrefour_container)
         lidlContainer = view.findViewById(R.id.lidl_container)
 
+        val loader = view.findViewById<ProgressBar>(R.id.progress_loader)
 
-        // Estilo del dropdown
-        etProduct.dropDownWidth = resources.getDimensionPixelSize(R.dimen.autocomplete_dropdown_width)
-        etProduct.dropDownHorizontalOffset = 64
+
+
+        val displayMetrics = resources.displayMetrics
+        etProduct.post {
+            etProduct.dropDownWidth = (displayMetrics.widthPixels * 0.60).toInt()  // 75% de la pantalla
+            etProduct.dropDownHorizontalOffset = (displayMetrics.widthPixels * 0.0025).toInt()
+        }
 
         // AutoComplete click listener para ocultar todo
         etProduct.setOnItemClickListener { parent, view, position, id ->
@@ -69,6 +76,10 @@ class CreateListFragment : Fragment() {
 
                 val input = s.toString().trim().replaceFirstChar { it.uppercase() }
                 if (input.length >= 1) {
+                    // Mostrar loader
+                    val loader = view?.findViewById<ProgressBar>(R.id.progress_loader)
+                    loader?.visibility = View.VISIBLE
+
                     Firebase.firestore.collection("productos")
                         .orderBy("nombre")
                         .startAt(input)
@@ -76,9 +87,27 @@ class CreateListFragment : Fragment() {
                         .get()
                         .addOnSuccessListener { result ->
                             val sugerencias = result.mapNotNull { it.getString("nombre") }
-                            val adapter = ArrayAdapter(requireContext(), R.layout.item_dropdown, sugerencias)
+
+                            val adapter = object : ArrayAdapter<String>(
+                                requireContext(),
+                                R.layout.item_dropdown,
+                                sugerencias
+                            ) {
+                                override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                                    val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.item_dropdown, parent, false)
+                                    val textView = view.findViewById<TextView>(R.id.dropdown_text)
+                                    textView.text = getItem(position)
+                                    return view
+                                }
+                            }
+
                             etProduct.setAdapter(adapter)
                             etProduct.showDropDown()
+                            loader?.visibility = View.GONE // Ocultar loader al terminar
+                        }
+                        .addOnFailureListener {
+                            loader?.visibility = View.GONE // Ocultar loader también si hay error
+                            Toast.makeText(requireContext(), "Error al buscar", Toast.LENGTH_SHORT).show()
                         }
                 }
             }
@@ -166,21 +195,43 @@ class CreateListFragment : Fragment() {
 
         var total = 0.0
         for (producto in productList) {
-            val unitPrice = if (name == "Mercadona") producto.precioMercadona else producto.precioCarrefour
+            val unitPrice = when (name) {
+                "Mercadona" -> producto.precioMercadona
+                "Carrefour" -> producto.precioCarrefour
+                "Lidl" -> producto.precioLidl
+                else -> 0.0
+            }
+
+            // Calcular precio mínimo entre supermercados para este producto
+            val minPrice = listOf(
+                producto.precioMercadona,
+                producto.precioCarrefour,
+                producto.precioLidl
+            ).minOrNull() ?: 0.0
+
             val totalPrice = unitPrice * producto.cantidad
 
             val itemView = layoutInflater.inflate(R.layout.item_producto, container, false)
-            itemView.findViewById<TextView>(R.id.tv_nombre_producto).text = producto.nombre
-            itemView.findViewById<TextView>(R.id.tv_precio_producto).text = "Precio: %.2f€".format(totalPrice)
-            itemView.findViewById<Button>(R.id.btn_borrar).setOnClickListener {
+            val tvNombre = itemView.findViewById<TextView>(R.id.tv_nombre_producto)
+            val tvPrecio = itemView.findViewById<TextView>(R.id.tv_precio_producto)
+            val btnBorrar = itemView.findViewById<Button>(R.id.btn_borrar)
+
+            // Texto del producto, con estrella si es el más barato
+            tvNombre.text = if (unitPrice == minPrice) "${producto.nombre} ⭐" else producto.nombre
+
+            // Estilo en negrita si es el más barato
+            tvNombre.setTypeface(null, if (unitPrice == minPrice) Typeface.BOLD else Typeface.NORMAL)
+
+            // Precio
+            tvPrecio.text = "Precio: %.2f€".format(totalPrice)
+
+            btnBorrar.setOnClickListener {
                 productList.remove(producto)
                 updateSupermarketViews()
             }
 
             total += totalPrice
-            if (container != null) {
-                container.addView(itemView)
-            }
+            container?.addView(itemView)
         }
 
         val totalText = TextView(requireContext()).apply {
@@ -201,7 +252,12 @@ class CreateListFragment : Fragment() {
                     Producto(
                         name = it.nombre,
                         quantity = it.cantidad,
-                        unitPrice = if (name == "Mercadona") it.precioMercadona else it.precioCarrefour
+                        unitPrice = when (name) {
+                            "Mercadona" -> it.precioMercadona
+                            "Carrefour" -> it.precioCarrefour
+                            "Lidl" -> it.precioLidl
+                            else -> 0.0
+                        }
                     )
                 }
 

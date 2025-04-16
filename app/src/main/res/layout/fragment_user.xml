@@ -18,11 +18,11 @@
         android:fontFamily="@font/plus_jakarta_sans"
         android:layout_marginTop="32dp" />
 
-
     <TextView
+        android:id="@+id/tv_num_listas"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Número de listas: 4"
+        android:text="Número de listas: 0"
         android:textSize="16sp"
         android:textColor="@color/smoky_black"
         android:layout_marginTop="12dp"
