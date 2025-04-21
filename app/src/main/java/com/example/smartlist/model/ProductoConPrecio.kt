@@ -5,5 +5,5 @@ data class ProductoConPrecio(
     val cantidad: Int,
     val precioMercadona: Double,
     val precioCarrefour: Double,
-    val precioLidl: Double
+    val precioAlcampo: Double
 )

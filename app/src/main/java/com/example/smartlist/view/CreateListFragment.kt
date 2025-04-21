@@ -25,7 +25,7 @@ class CreateListFragment : Fragment() {
     private lateinit var etQuantity: EditText
     private lateinit var mercadonaContainer: LinearLayout
     private lateinit var carrefourContainer: LinearLayout
-    private lateinit var lidlContainer: LinearLayout
+    private lateinit var alcampoContainer: LinearLayout
     private val productList = mutableListOf<ProductoConPrecio>()
     private var shouldSkipAutoComplete = false
 
@@ -41,7 +41,7 @@ class CreateListFragment : Fragment() {
         val btnAdd = view.findViewById<Button>(R.id.btn_add_product)
         mercadonaContainer = view.findViewById(R.id.mercadona_container)
         carrefourContainer = view.findViewById(R.id.carrefour_container)
-        lidlContainer = view.findViewById(R.id.lidl_container)
+        alcampoContainer = view.findViewById(R.id.alcampo_container)
 
         val loader = view.findViewById<ProgressBar>(R.id.progress_loader)
 
@@ -135,7 +135,7 @@ class CreateListFragment : Fragment() {
                                     if (supermercadoMap != null) {
                                         val precioMercadona = supermercadoMap["mercadona"]?.get("precio") ?: 0.0
                                         val precioCarrefour = supermercadoMap["carrefour"]?.get("precio") ?: 0.0
-                                        val precioLidl = supermercadoMap["lidl"]?.get("precio") ?: 0.0
+                                        val precioAlcampo = supermercadoMap["alcampo"]?.get("precio") ?: 0.0
 
                                         productList.add(
                                             ProductoConPrecio(
@@ -143,7 +143,7 @@ class CreateListFragment : Fragment() {
                                                 cantidad,
                                                 precioMercadona,
                                                 precioCarrefour,
-                                                precioLidl
+                                                precioAlcampo
                                             )
                                         )
                                         updateSupermarketViews()
@@ -168,7 +168,7 @@ class CreateListFragment : Fragment() {
     private fun updateSupermarketViews() {
         updateSupermarketView("Mercadona", mercadonaContainer)
         updateSupermarketView("Carrefour", carrefourContainer)
-        updateSupermarketView("Lidl", lidlContainer)
+        updateSupermarketView("Alcampo", alcampoContainer)
     }
 
     private fun updateSupermarketView(name: String, container: LinearLayout) {
@@ -179,7 +179,7 @@ class CreateListFragment : Fragment() {
         val logo = when (name.lowercase()) {
             "mercadona" -> R.drawable.logo_mercadona
             "carrefour" -> R.drawable.logo_carrefour
-            "lidl" -> R.drawable.logo_lidl
+            "alcampo" -> R.drawable.logo_alcampo
             else -> R.drawable.logo_app // Por si acaso
         }
         header.findViewById<ImageView>(R.id.iv_logo).setImageResource(logo)
@@ -187,7 +187,7 @@ class CreateListFragment : Fragment() {
         val container = when (name.lowercase()) {
             "mercadona" -> view?.findViewById<LinearLayout>(R.id.mercadona_container)
             "carrefour" -> view?.findViewById<LinearLayout>(R.id.carrefour_container)
-            "lidl" -> view?.findViewById<LinearLayout>(R.id.lidl_container)
+            "alcampo" -> view?.findViewById<LinearLayout>(R.id.alcampo_container)
             else -> null
         }
 
@@ -198,7 +198,7 @@ class CreateListFragment : Fragment() {
             val unitPrice = when (name) {
                 "Mercadona" -> producto.precioMercadona
                 "Carrefour" -> producto.precioCarrefour
-                "Lidl" -> producto.precioLidl
+                "Alcampo" -> producto.precioAlcampo
                 else -> 0.0
             }
 
@@ -206,7 +206,7 @@ class CreateListFragment : Fragment() {
             val minPrice = listOf(
                 producto.precioMercadona,
                 producto.precioCarrefour,
-                producto.precioLidl
+                producto.precioAlcampo
             ).minOrNull() ?: 0.0
 
             val totalPrice = unitPrice * producto.cantidad
@@ -255,7 +255,7 @@ class CreateListFragment : Fragment() {
                         unitPrice = when (name) {
                             "Mercadona" -> it.precioMercadona
                             "Carrefour" -> it.precioCarrefour
-                            "Lidl" -> it.precioLidl
+                            "Alcampo" -> it.precioAlcampo
                             else -> 0.0
                         }
                     )
