@@ -18,6 +18,7 @@ import android.view.inputmethod.InputMethodManager
 import android.content.Context
 import android.graphics.Typeface
 import com.example.smartlist.model.ProductoConPrecio
+import java.text.Normalizer
 
 class CreateListFragment : Fragment() {
 
@@ -25,7 +26,7 @@ class CreateListFragment : Fragment() {
     private lateinit var etQuantity: EditText
     private lateinit var mercadonaContainer: LinearLayout
     private lateinit var carrefourContainer: LinearLayout
-    private lateinit var alcampoContainer: LinearLayout
+    private lateinit var diaContainer: LinearLayout
     private val productList = mutableListOf<ProductoConPrecio>()
     private var shouldSkipAutoComplete = false
 
@@ -41,7 +42,7 @@ class CreateListFragment : Fragment() {
         val btnAdd = view.findViewById<Button>(R.id.btn_add_product)
         mercadonaContainer = view.findViewById(R.id.mercadona_container)
         carrefourContainer = view.findViewById(R.id.carrefour_container)
-        alcampoContainer = view.findViewById(R.id.alcampo_container)
+        diaContainer = view.findViewById(R.id.dia_container)
 
         val loader = view.findViewById<ProgressBar>(R.id.progress_loader)
 
@@ -74,19 +75,24 @@ class CreateListFragment : Fragment() {
                     return
                 }
 
-                val input = s.toString().trim().replaceFirstChar { it.uppercase() }
-                if (input.length >= 1) {
-                    // Mostrar loader
+                val input = s.toString().trim()
+                val palabras = normalizar(input).split(" ").filter { it.isNotBlank() }
+
+                if (palabras.isNotEmpty()) {
                     val loader = view?.findViewById<ProgressBar>(R.id.progress_loader)
                     loader?.visibility = View.VISIBLE
 
+                    // Buscar por la primera palabra para reducir la cantidad de documentos traídos
                     Firebase.firestore.collection("productos")
-                        .orderBy("nombre")
-                        .startAt(input)
-                        .endAt(input + "\uf8ff")
+                        .whereArrayContains("keywords", palabras[0])
                         .get()
                         .addOnSuccessListener { result ->
-                            val sugerencias = result.mapNotNull { it.getString("nombre") }
+                            val filtrados = result.filter { doc ->
+                                val keywords = doc.get("keywords") as? List<*> ?: emptyList<String>()
+                                palabras.all { palabra -> keywords.contains(palabra) }
+                            }
+
+                            val sugerencias = filtrados.mapNotNull { it.getString("nombre") }
 
                             val adapter = object : ArrayAdapter<String>(
                                 requireContext(),
@@ -94,7 +100,8 @@ class CreateListFragment : Fragment() {
                                 sugerencias
                             ) {
                                 override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                                    val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.item_dropdown, parent, false)
+                                    val view = convertView ?: LayoutInflater.from(context)
+                                        .inflate(R.layout.item_dropdown, parent, false)
                                     val textView = view.findViewById<TextView>(R.id.dropdown_text)
                                     textView.text = getItem(position)
                                     return view
@@ -103,10 +110,10 @@ class CreateListFragment : Fragment() {
 
                             etProduct.setAdapter(adapter)
                             etProduct.showDropDown()
-                            loader?.visibility = View.GONE // Ocultar loader al terminar
+                            loader?.visibility = View.GONE
                         }
                         .addOnFailureListener {
-                            loader?.visibility = View.GONE // Ocultar loader también si hay error
+                            loader?.visibility = View.GONE
                             Toast.makeText(requireContext(), "Error al buscar", Toast.LENGTH_SHORT).show()
                         }
                 }
@@ -135,7 +142,7 @@ class CreateListFragment : Fragment() {
                                     if (supermercadoMap != null) {
                                         val precioMercadona = supermercadoMap["mercadona"]?.get("precio") ?: 0.0
                                         val precioCarrefour = supermercadoMap["carrefour"]?.get("precio") ?: 0.0
-                                        val precioAlcampo = supermercadoMap["alcampo"]?.get("precio") ?: 0.0
+                                        val precioDia = supermercadoMap["dia"]?.get("precio") ?: 0.0
 
                                         productList.add(
                                             ProductoConPrecio(
@@ -143,7 +150,7 @@ class CreateListFragment : Fragment() {
                                                 cantidad,
                                                 precioMercadona,
                                                 precioCarrefour,
-                                                precioAlcampo
+                                                precioDia
                                             )
                                         )
                                         updateSupermarketViews()
@@ -168,7 +175,12 @@ class CreateListFragment : Fragment() {
     private fun updateSupermarketViews() {
         updateSupermarketView("Mercadona", mercadonaContainer)
         updateSupermarketView("Carrefour", carrefourContainer)
-        updateSupermarketView("Alcampo", alcampoContainer)
+        updateSupermarketView("Dia", diaContainer)
+    }
+
+    private fun normalizar(texto: String): String {
+        val normalized = Normalizer.normalize(texto, Normalizer.Form.NFD)
+        return normalized.replace("\\p{Mn}+".toRegex(), "").lowercase()
     }
 
     private fun updateSupermarketView(name: String, container: LinearLayout) {
@@ -179,7 +191,7 @@ class CreateListFragment : Fragment() {
         val logo = when (name.lowercase()) {
             "mercadona" -> R.drawable.logo_mercadona
             "carrefour" -> R.drawable.logo_carrefour
-            "alcampo" -> R.drawable.logo_alcampo
+            "dia" -> R.drawable.logo_dia
             else -> R.drawable.logo_app // Por si acaso
         }
         header.findViewById<ImageView>(R.id.iv_logo).setImageResource(logo)
@@ -187,7 +199,7 @@ class CreateListFragment : Fragment() {
         val container = when (name.lowercase()) {
             "mercadona" -> view?.findViewById<LinearLayout>(R.id.mercadona_container)
             "carrefour" -> view?.findViewById<LinearLayout>(R.id.carrefour_container)
-            "alcampo" -> view?.findViewById<LinearLayout>(R.id.alcampo_container)
+            "dia" -> view?.findViewById<LinearLayout>(R.id.dia_container)
             else -> null
         }
 
@@ -198,7 +210,7 @@ class CreateListFragment : Fragment() {
             val unitPrice = when (name) {
                 "Mercadona" -> producto.precioMercadona
                 "Carrefour" -> producto.precioCarrefour
-                "Alcampo" -> producto.precioAlcampo
+                "Dia" -> producto.precioDia
                 else -> 0.0
             }
 
@@ -206,7 +218,7 @@ class CreateListFragment : Fragment() {
             val minPrice = listOf(
                 producto.precioMercadona,
                 producto.precioCarrefour,
-                producto.precioAlcampo
+                producto.precioDia
             ).minOrNull() ?: 0.0
 
             val totalPrice = unitPrice * producto.cantidad
@@ -255,7 +267,7 @@ class CreateListFragment : Fragment() {
                         unitPrice = when (name) {
                             "Mercadona" -> it.precioMercadona
                             "Carrefour" -> it.precioCarrefour
-                            "Alcampo" -> it.precioAlcampo
+                            "Dia" -> it.precioDia
                             else -> 0.0
                         }
                     )

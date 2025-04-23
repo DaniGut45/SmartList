@@ -18,7 +18,7 @@ class RegisterFragment : Fragment() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var googleSignInClient: GoogleSignInClient
-    private val RC_GOOGLE_SIGN_IN = 1001
+    private val RC_GOOGLE_SIGN_IN = 1001 // Código de resultado para identificar el login con Google
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -27,7 +27,7 @@ class RegisterFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_register, container, false)
         auth = FirebaseAuth.getInstance()
 
-        // Configuración de Google Sign-In
+        // Configuración para el inicio de sesión con Google
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.default_web_client_id))
             .requestEmail()
@@ -42,7 +42,7 @@ class RegisterFragment : Fragment() {
         val toLoginText = view.findViewById<TextView>(R.id.tv_to_login)
         val btnGoogleRegister = view.findViewById<TextView>(R.id.btn_google_register)
 
-        // Botón de Google
+        // Inicia sesión con Google (se hace signOut primero para evitar sesión previa)
         btnGoogleRegister.setOnClickListener {
             googleSignInClient.signOut().addOnCompleteListener {
                 val signInIntent = googleSignInClient.signInIntent
@@ -65,15 +65,17 @@ class RegisterFragment : Fragment() {
                 .addOnSuccessListener { result ->
                     val user = result.user ?: return@addOnSuccessListener
 
+                    // Envía correo de verificación
                     user.sendEmailVerification()
                         .addOnSuccessListener {
+                            // Muestra diálogo para confirmar verificación del correo
                             AlertDialog.Builder(requireContext())
                                 .setTitle("Verifica tu correo")
                                 .setMessage("Te hemos enviado un correo a ${user.email}. Verifícalo y luego pulsa el botón para continuar.")
                                 .setPositiveButton("He verificado") { _, _ ->
                                     user.reload().addOnCompleteListener { reloadTask ->
                                         if (reloadTask.isSuccessful && user.isEmailVerified) {
-                                            // ✅ Verificado
+                                            // Si se verificó el correo, se guarda en Firestore
                                             val userMap = mapOf(
                                                 "nombre" to username,
                                                 "email" to email
@@ -96,7 +98,7 @@ class RegisterFragment : Fragment() {
                                                     Toast.makeText(requireContext(), "Error al guardar usuario", Toast.LENGTH_SHORT).show()
                                                 }
                                         } else {
-                                            // ❌ No verificado → eliminar cuenta
+                                            // Si no verificó, se elimina la cuenta
                                             user.delete().addOnCompleteListener {
                                                 Toast.makeText(requireContext(), "Correo no verificado. Tu cuenta ha sido eliminada.", Toast.LENGTH_LONG).show()
                                             }
@@ -115,6 +117,7 @@ class RegisterFragment : Fragment() {
                         }
                 }
                 .addOnFailureListener { exception ->
+                    // Manejo de errores específicos de Firebase
                     when (exception) {
                         is FirebaseAuthWeakPasswordException -> {
                             Toast.makeText(requireContext(), "La contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show()
@@ -132,7 +135,7 @@ class RegisterFragment : Fragment() {
                 }
         }
 
-        // Navegar a login
+        // Navega al fragmento de login
         toLoginText.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .setCustomAnimations(
@@ -146,7 +149,7 @@ class RegisterFragment : Fragment() {
         return view
     }
 
-    // Resultado del intent de Google Sign-In
+    // Resultado del intento de registro con Google
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -166,6 +169,7 @@ class RegisterFragment : Fragment() {
                                 "email" to (user.email ?: "Sin email")
                             )
 
+                            // Guarda usuario nuevo autenticado con Google en Firestore
                             Firebase.firestore.collection("usuarios").document(userId).set(userMap)
                                 .addOnSuccessListener {
                                     SessionManager.isLoggedIn = true

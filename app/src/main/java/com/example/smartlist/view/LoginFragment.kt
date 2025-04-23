@@ -18,7 +18,7 @@ class LoginFragment : Fragment() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var googleSignInClient: GoogleSignInClient
-    private val RC_GOOGLE_SIGN_IN = 1002 // diferente del de RegisterFragment
+    private val RC_GOOGLE_SIGN_IN = 1002 // Código para identificar el resultado del login con Google
 
     @SuppressLint("MissingInflatedId")
     override fun onCreateView(
@@ -28,6 +28,9 @@ class LoginFragment : Fragment() {
 
         auth = FirebaseAuth.getInstance()
 
+        // Configuración de opciones para el inicio de sesión con Google
+        // Uso el método deprecated porque es el que funciona,
+        // el nuevo método funciona solo para algunas versiones de Android
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.default_web_client_id))
             .requestEmail()
@@ -40,8 +43,9 @@ class LoginFragment : Fragment() {
         val etPassword = view.findViewById<EditText>(R.id.et_password)
         val loginButton = view.findViewById<Button>(R.id.btn_login)
         val toRegisterText = view.findViewById<TextView>(R.id.tv_to_register)
-        val btnGoogleLogin = view.findViewById<TextView>(R.id.btn_google_register) // Usa el mismo ID si el botón es compartido
+        val btnGoogleLogin = view.findViewById<TextView>(R.id.btn_google_register)
 
+        // Recuperación de contraseña por correo
         forgotPasswordText.setOnClickListener {
             val email = etEmail.text.toString().trim()
 
@@ -59,6 +63,7 @@ class LoginFragment : Fragment() {
                 }
         }
 
+        // Inicio de sesión con email y contraseña
         loginButton.setOnClickListener {
             val email = etEmail.text.toString().trim()
             val password = etPassword.text.toString().trim()
@@ -70,8 +75,9 @@ class LoginFragment : Fragment() {
 
             auth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener {
-                    SessionManager.isLoggedIn = true
+                    SessionManager.isLoggedIn = true // Se marca la sesión como activa
 
+                    // Navega al fragmento principal después del login
                     parentFragmentManager.beginTransaction()
                         .setCustomAnimations(
                             R.anim.slide_in_left,
@@ -83,6 +89,7 @@ class LoginFragment : Fragment() {
                     (activity as? MainActivity)?.updateBottomNavColors("home")
                 }
                 .addOnFailureListener { exception ->
+                    // Manejo de errores comunes de Firebase
                     when (exception) {
                         is FirebaseAuthInvalidUserException -> {
                             Toast.makeText(requireContext(), "No existe una cuenta con este correo", Toast.LENGTH_SHORT).show()
@@ -95,9 +102,9 @@ class LoginFragment : Fragment() {
                         }
                     }
                 }
-
         }
 
+        // Inicio de sesión con Google
         btnGoogleLogin.setOnClickListener {
             googleSignInClient.signOut().addOnCompleteListener {
                 val signInIntent = googleSignInClient.signInIntent
@@ -105,6 +112,7 @@ class LoginFragment : Fragment() {
             }
         }
 
+        // Enlace para ir al registro
         toRegisterText.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .setCustomAnimations(
@@ -118,6 +126,7 @@ class LoginFragment : Fragment() {
         return view
     }
 
+    // Manejo del resultado del intent de Google Sign-In
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -127,6 +136,7 @@ class LoginFragment : Fragment() {
                 val account = task.getResult(ApiException::class.java)!!
                 val credential = GoogleAuthProvider.getCredential(account.idToken, null)
 
+                // Login con credenciales de Google
                 auth.signInWithCredential(credential)
                     .addOnCompleteListener { task ->
                         if (task.isSuccessful) {
@@ -137,6 +147,7 @@ class LoginFragment : Fragment() {
                                 "email" to (user.email ?: "Sin email")
                             )
 
+                            // Guarda la información del usuario en Firestore
                             Firebase.firestore.collection("usuarios").document(userId).set(userMap)
                                 .addOnSuccessListener {
                                     SessionManager.isLoggedIn = true

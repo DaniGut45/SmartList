@@ -23,16 +23,15 @@ class UserFragment : Fragment() {
 
         val logoutButton: Button = view.findViewById(R.id.btn_logout)
         tvUsername = view.findViewById(R.id.tv_username)
-
-        // 🔐 Obtener ID del usuario actual
-        val userId = FirebaseAuth.getInstance().currentUser?.uid
-
         val tvNumListas = view.findViewById<TextView>(R.id.tv_num_listas)
+
+        // 🔐 Obtener ID del usuario actual (si hay sesión activa)
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
 
         if (userId != null) {
             val userDocRef = Firebase.firestore.collection("usuarios").document(userId)
 
-            // Cargar nombre
+            // Cargar nombre del usuario desde Firestore
             userDocRef.get()
                 .addOnSuccessListener { document ->
                     val nombre = document.getString("nombre")
@@ -42,7 +41,7 @@ class UserFragment : Fragment() {
                     tvUsername.text = "Error al cargar usuario"
                 }
 
-            // Contar listas del usuario
+            // Contar la cantidad de listas del usuario
             userDocRef.collection("listas")
                 .get()
                 .addOnSuccessListener { snapshot ->
@@ -53,26 +52,12 @@ class UserFragment : Fragment() {
                     tvNumListas.text = "Error al cargar número de listas"
                 }
         } else {
+            // Si no hay sesión, se muestra mensaje por defecto
             tvUsername.text = "No hay sesión activa"
             tvNumListas.text = ""
         }
 
-
-        if (userId != null) {
-            Firebase.firestore.collection("usuarios")
-                .document(userId)
-                .get()
-                .addOnSuccessListener { document ->
-                    val nombre = document.getString("nombre")
-                    tvUsername.text = nombre ?: "Usuario desconocido"
-                }
-                .addOnFailureListener {
-                    tvUsername.text = "Error al cargar usuario"
-                }
-        } else {
-            tvUsername.text = "No hay sesión activa"
-        }
-
+        // Cierre de sesión y retorno al fragmento principal
         logoutButton.setOnClickListener {
             SessionManager.isLoggedIn = false
             FirebaseAuth.getInstance().signOut()

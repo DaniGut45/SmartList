@@ -16,7 +16,7 @@ class ShoppingListViewModel : ViewModel() {
     private val _shoppingLists = MutableLiveData<MutableList<ShoppingList>>(mutableListOf())
     val shoppingLists: LiveData<MutableList<ShoppingList>> = _shoppingLists
 
-    // Este método ahora recibe productos con precios reales
+    // Añade una nueva lista con los productos seleccionados
     fun addList(supermarket: String, productos: List<Producto>) {
         val sdf = SimpleDateFormat("dd/MM/yyyy - HH:mm", Locale.getDefault())
         val now = sdf.format(Date())
@@ -29,10 +29,11 @@ class ShoppingListViewModel : ViewModel() {
             total = total
         )
 
+        // Se actualiza la lista observable para notificar a la vista
         _shoppingLists.value?.add(list)
         _shoppingLists.postValue(_shoppingLists.value)
 
-        // Guardar en Firestore si está logueado
+        // Guardar en Firestore si el usuario está autenticado
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         val db = Firebase.firestore
 
@@ -45,7 +46,7 @@ class ShoppingListViewModel : ViewModel() {
         db.collection("usuarios").document(userId)
             .collection("listas").add(listData)
             .addOnSuccessListener { docRef ->
-                // Añadir productos a subcolección
+                // Subcolección de productos dentro de la lista
                 productos.forEach { producto ->
                     val productoMap = mapOf(
                         "name" to producto.name,
@@ -57,11 +58,12 @@ class ShoppingListViewModel : ViewModel() {
             }
     }
 
+    // Limpia la lista en memoria (no afecta Firestore)
     fun clear() {
         _shoppingLists.value = mutableListOf()
     }
 
-    // Si todavía quieres añadir Mercadona y Carrefour a la vez, puedes mantener este método (opcional)
+    // Método opcional para añadir listas de múltiples supermercados al mismo tiempo
     fun addSupermarketLists(mercadona: List<Producto>, carrefour: List<Producto>) {
         val sdf = SimpleDateFormat("dd/MM/yyyy - HH:mm", Locale.getDefault())
         val now = sdf.format(Date())

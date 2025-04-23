@@ -17,16 +17,16 @@ import com.example.smartlist.view.UserFragment
 import com.example.smartlist.viewmodel.ShoppingListViewModel
 import com.google.firebase.auth.FirebaseAuth
 
-
 class MainActivity : AppCompatActivity() {
 
     private lateinit var btnHome: ImageButton
     private lateinit var btnProfile: ImageButton
 
+    // ViewModel compartido para manejar datos de la lista de compras
     val shoppingListViewModel by viewModels<ShoppingListViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // CAMBIA el tema antes de cargar el contenido para evitar usar el splash permanentemente
+        // Evita que el tema splash se quede permanentemente aplicado
         setTheme(R.style.Theme_SmartList)
 
         super.onCreate(savedInstanceState)
@@ -37,13 +37,14 @@ class MainActivity : AppCompatActivity() {
 
         val addButton: ImageButton = findViewById(R.id.btn_add)
         addButton.setOnClickListener {
+            // Reemplaza el fragmento actual con el de creación de lista
             supportFragmentManager.commit {
                 replace<CreateListFragment>(R.id.fragmentContainer)
             }
             updateBottomNavColors("add")
         }
 
-
+        // Carga inicial de fragmento dependiendo del estado de sesión
         if (savedInstanceState == null) {
             val currentUser = FirebaseAuth.getInstance().currentUser
 
@@ -62,14 +63,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-
-
+        // Ajusta padding del contenedor según la visibilidad de las barras del sistema
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.fragmentContainer)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top - 80, systemBars.right, systemBars.bottom)
             insets
         }
 
+        // Navega a Home (MainFragment)
         btnHome.setOnClickListener {
             supportFragmentManager.commit {
                 replace<MainFragment>(R.id.fragmentContainer)
@@ -77,7 +78,7 @@ class MainActivity : AppCompatActivity() {
             updateBottomNavColors("home")
         }
 
-
+        // Navega a perfil o registro dependiendo del estado de sesión
         btnProfile.setOnClickListener {
             val fragment = if (SessionManager.isLoggedIn) {
                 UserFragment()
@@ -95,12 +96,9 @@ class MainActivity : AppCompatActivity() {
 
             updateBottomNavColors("profile")
         }
-
-
-
-
     }
 
+    // Cambia el color de los botones de navegación inferior según el ítem seleccionado
     fun updateBottomNavColors(selected: String) {
         val golden = getColor(R.color.dark_goldenrod)
         val black = getColor(R.color.smoky_black)
@@ -123,5 +121,4 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
 }

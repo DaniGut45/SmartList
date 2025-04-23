@@ -29,33 +29,34 @@ class MainFragment : Fragment() {
 
         recyclerView = view.findViewById(R.id.recyclerLists)
 
-        // Inicializamos el adaptador con la lista
+        // Inicializamos el adaptador con la lista vacía, que luego se llenará
         adapter = ListAdapter(listas)
         recyclerView.adapter = adapter
 
         val viewModel = (activity as MainActivity).shoppingListViewModel
 
+        // Observamos el ViewModel para actualizar la lista si hay cambios
         viewModel.shoppingLists.observe(viewLifecycleOwner) { newList ->
             listas.clear()
             listas.addAll(newList)
             adapter.notifyDataSetChanged()
         }
 
-        // Botón para ir a crear lista
+        // Botón para ir al fragmento de creación de nueva lista
         view.findViewById<Button>(R.id.btn_create_list).setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .setCustomAnimations(
-                    R.anim.slide_in_right,  // enter
-                    R.anim.slide_out_left,  // exit
-                    R.anim.slide_in_left,   // popEnter (al volver)
-                    R.anim.slide_out_right  // popExit (al volver)
+                    R.anim.slide_in_right,  // animación al entrar
+                    R.anim.slide_out_left,  // animación al salir
+                    R.anim.slide_in_left,   // animación al volver (pop enter)
+                    R.anim.slide_out_right  // animación al volver (pop exit)
                 )
                 .replace<CreateListFragment>(R.id.fragmentContainer)
-                .addToBackStack(null)
+                .addToBackStack(null) // permite volver con el botón atrás
                 .commit()
         }
 
-
+        // Si el usuario está autenticado, cargamos sus listas desde Firestore
         if (userId != null) {
             Firebase.firestore.collection("usuarios")
                 .document(userId)
@@ -69,7 +70,7 @@ class MainFragment : Fragment() {
                         val store = doc.getString("storeName") ?: ""
                         val total = doc.getDouble("total") ?: 0.0
 
-                        // Traemos la subcolección de productos
+                        // Se obtiene la subcolección de productos dentro de cada lista
                         doc.reference.collection("productos").get()
                             .addOnSuccessListener { productosDocs ->
                                 val productos = productosDocs.map {

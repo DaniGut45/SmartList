@@ -11,6 +11,8 @@ class ListAdapter(
     private val list: MutableList<ShoppingList>
 ) : RecyclerView.Adapter<ListAdapter.ListViewHolder>() {
 
+    // ViewHolder que contiene las vistas necesarias para mostrar cada lista de compras.
+    // Solo se inicializan las vistas base (fecha, tienda, flecha, y contenedor para productos).
     inner class ListViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val dateTime: TextView = view.findViewById(R.id.tv_date_time)
         val store: TextView = view.findViewById(R.id.tv_store)
@@ -29,16 +31,19 @@ class ListAdapter(
         holder.dateTime.text = item.dateTime
         holder.store.text = item.storeName
 
+        // Se calcula el total de la compra en tiempo real sumando cantidad * precio unitario de cada producto.
         val total = item.products.sumOf { it.unitPrice * it.quantity }
         holder.itemView.findViewById<TextView>(R.id.tv_total).text =
             "Total: %.2f€".format(total)
 
+        // Se limpia el layout antes de volver a inflar las vistas de productos (prevención de duplicados).
         holder.layoutProducts.removeAllViews()
 
         if (item.isExpanded) {
             holder.layoutProducts.visibility = View.VISIBLE
-            holder.arrow.rotation = 180f
+            holder.arrow.rotation = 180f // Flecha rotada hacia arriba
 
+            // Por cada producto en la lista, se crea y configura dinámicamente un TextView.
             item.products.forEach { product ->
                 val tv = TextView(holder.itemView.context).apply {
                     text = "${product.name} - x${product.quantity} - %.2f€".format(product.quantity * product.unitPrice)
@@ -50,15 +55,14 @@ class ListAdapter(
 
         } else {
             holder.layoutProducts.visibility = View.GONE
-            holder.arrow.rotation = 0f
+            holder.arrow.rotation = 0f // Flecha hacia abajo
         }
 
+        // Maneja la expansión/colapso de la vista al hacer clic sobre el ítem completo.
         holder.itemView.setOnClickListener {
             item.isExpanded = !item.isExpanded
-            notifyItemChanged(position)
+            notifyItemChanged(position) // Se actualiza solo el ítem actual
         }
-
-
     }
 
     override fun getItemCount(): Int = list.size
