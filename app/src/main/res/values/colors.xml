@@ -3,6 +3,8 @@
     <!-- Fondo principal -->
     <color name="floral_white">#FAF7F0</color>
 
+    <color name="red">#D93030</color>
+
     <!-- Color de apoyo (borrar producto) -->
     <color name="eggshell">#F5EDDB</color>
 

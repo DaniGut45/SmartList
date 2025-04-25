@@ -29,11 +29,9 @@ class ShoppingListViewModel : ViewModel() {
             total = total
         )
 
-        // Se actualiza la lista observable para notificar a la vista
         _shoppingLists.value?.add(list)
         _shoppingLists.postValue(_shoppingLists.value)
 
-        // Guardar en Firestore si el usuario está autenticado
         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
         val db = Firebase.firestore
 
@@ -46,7 +44,6 @@ class ShoppingListViewModel : ViewModel() {
         db.collection("usuarios").document(userId)
             .collection("listas").add(listData)
             .addOnSuccessListener { docRef ->
-                // Subcolección de productos dentro de la lista
                 productos.forEach { producto ->
                     val productoMap = mapOf(
                         "name" to producto.name,
@@ -64,7 +61,7 @@ class ShoppingListViewModel : ViewModel() {
     }
 
     // Método opcional para añadir listas de múltiples supermercados al mismo tiempo
-    fun addSupermarketLists(mercadona: List<Producto>, carrefour: List<Producto>) {
+    fun addSupermarketLists(mercadona: List<Producto>, dia: List<Producto>) {
         val sdf = SimpleDateFormat("dd/MM/yyyy - HH:mm", Locale.getDefault())
         val now = sdf.format(Date())
 
@@ -76,15 +73,15 @@ class ShoppingListViewModel : ViewModel() {
             total = mercadona.sumOf { it.unitPrice * it.quantity }
         )
 
-        val listaCarrefour = ShoppingList(
+        val listaDia = ShoppingList(
             dateTime = now,
-            storeName = "Carrefour",
-            products = carrefour,
+            storeName = "Dia",
+            products = dia,
             isExpanded = false,
-            total = carrefour.sumOf { it.unitPrice * it.quantity }
+            total = dia.sumOf { it.unitPrice * it.quantity }
         )
 
-        _shoppingLists.value?.addAll(listOf(listaMercadona, listaCarrefour))
+        _shoppingLists.value?.addAll(listOf(listaMercadona, listaDia))
         _shoppingLists.postValue(_shoppingLists.value)
     }
 }

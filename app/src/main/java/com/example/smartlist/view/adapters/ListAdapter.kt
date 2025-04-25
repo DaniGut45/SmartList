@@ -32,7 +32,9 @@ class ListAdapter(
         holder.store.text = item.storeName
 
         // Se calcula el total de la compra en tiempo real sumando cantidad * precio unitario de cada producto.
-        val total = item.products.sumOf { it.unitPrice * it.quantity }
+        val total = item.products
+            .filter { it.unitPrice != -1.0 }
+            .sumOf { it.unitPrice * it.quantity }
         holder.itemView.findViewById<TextView>(R.id.tv_total).text =
             "Total: %.2f€".format(total)
 
@@ -46,7 +48,11 @@ class ListAdapter(
             // Por cada producto en la lista, se crea y configura dinámicamente un TextView.
             item.products.forEach { product ->
                 val tv = TextView(holder.itemView.context).apply {
-                    text = "${product.name} - x${product.quantity} - %.2f€".format(product.quantity * product.unitPrice)
+                    text = if (product.unitPrice == -1.0) {
+                        "${product.name} - x${product.quantity} - No disponible"
+                    } else {
+                        "${product.name} - x${product.quantity} - ${"%.2f".format(product.quantity * product.unitPrice)}€"
+                    }
                     setTextColor(ContextCompat.getColor(context, R.color.smoky_black))
                     setPadding(0, 4, 0, 4)
                 }

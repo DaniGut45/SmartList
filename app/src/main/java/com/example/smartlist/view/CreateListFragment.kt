@@ -25,11 +25,9 @@ class CreateListFragment : Fragment() {
     private lateinit var etProduct: AutoCompleteTextView
     private lateinit var etQuantity: EditText
     private lateinit var mercadonaContainer: LinearLayout
-    private lateinit var carrefourContainer: LinearLayout
     private lateinit var diaContainer: LinearLayout
     private val productList = mutableListOf<ProductoConPrecio>()
     private var shouldSkipAutoComplete = false
-
 
     @SuppressLint("MissingInflatedId")
     override fun onCreateView(
@@ -41,21 +39,17 @@ class CreateListFragment : Fragment() {
         etQuantity = view.findViewById(R.id.et_quantity)
         val btnAdd = view.findViewById<Button>(R.id.btn_add_product)
         mercadonaContainer = view.findViewById(R.id.mercadona_container)
-        carrefourContainer = view.findViewById(R.id.carrefour_container)
         diaContainer = view.findViewById(R.id.dia_container)
 
         val loader = view.findViewById<ProgressBar>(R.id.progress_loader)
 
-
-
         val displayMetrics = resources.displayMetrics
         etProduct.post {
-            etProduct.dropDownWidth = (displayMetrics.widthPixels * 0.60).toInt()  // 75% de la pantalla
+            etProduct.dropDownWidth = (displayMetrics.widthPixels * 0.60).toInt()
             etProduct.dropDownHorizontalOffset = (displayMetrics.widthPixels * 0.0025).toInt()
         }
 
-        // AutoComplete click listener para ocultar todo
-        etProduct.setOnItemClickListener { parent, view, position, id ->
+        etProduct.setOnItemClickListener { parent, _, position, _ ->
             val selected = parent.getItemAtPosition(position).toString()
             shouldSkipAutoComplete = true
             etProduct.setText(selected)
@@ -79,10 +73,8 @@ class CreateListFragment : Fragment() {
                 val palabras = normalizar(input).split(" ").filter { it.isNotBlank() }
 
                 if (palabras.isNotEmpty()) {
-                    val loader = view?.findViewById<ProgressBar>(R.id.progress_loader)
-                    loader?.visibility = View.VISIBLE
+                    loader.visibility = View.VISIBLE
 
-                    // Buscar por la primera palabra para reducir la cantidad de documentos traídos
                     Firebase.firestore.collection("productos")
                         .whereArrayContains("keywords", palabras[0])
                         .get()
@@ -95,9 +87,7 @@ class CreateListFragment : Fragment() {
                             val sugerencias = filtrados.mapNotNull { it.getString("nombre") }
 
                             val adapter = object : ArrayAdapter<String>(
-                                requireContext(),
-                                R.layout.item_dropdown,
-                                sugerencias
+                                requireContext(), R.layout.item_dropdown, sugerencias
                             ) {
                                 override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                                     val view = convertView ?: LayoutInflater.from(context)
@@ -110,10 +100,10 @@ class CreateListFragment : Fragment() {
 
                             etProduct.setAdapter(adapter)
                             etProduct.showDropDown()
-                            loader?.visibility = View.GONE
+                            loader.visibility = View.GONE
                         }
                         .addOnFailureListener {
-                            loader?.visibility = View.GONE
+                            loader.visibility = View.GONE
                             Toast.makeText(requireContext(), "Error al buscar", Toast.LENGTH_SHORT).show()
                         }
                 }
@@ -133,25 +123,18 @@ class CreateListFragment : Fragment() {
                         if (!documents.isEmpty) {
                             val doc = documents.first()
                             val idProducto = doc.id
-                            val precios = mutableMapOf<String, Double>()
-                            db.collection("productos")
-                                .document(idProducto)
-                                .get()
+                            db.collection("productos").document(idProducto).get()
                                 .addOnSuccessListener { doc ->
-                                    val supermercadoMap = doc.get("supermercado") as? Map<String, Map<String, Double>>
+                                    val supermercadoMap = doc.get("supermercado") as? Map<*, *>
                                     if (supermercadoMap != null) {
-                                        val precioMercadona = supermercadoMap["mercadona"]?.get("precio") ?: 0.0
-                                        val precioCarrefour = supermercadoMap["carrefour"]?.get("precio") ?: 0.0
-                                        val precioDia = supermercadoMap["dia"]?.get("precio") ?: 0.0
+                                        val precioMercadona = (supermercadoMap["mercadona"] as? Map<*, *>)?.get("precio") as? Number
+                                        val precioDia = (supermercadoMap["dia"] as? Map<*, *>)?.get("precio") as? Number
+
+                                        val finalPrecioMercadona = precioMercadona?.toDouble() ?: -1.0
+                                        val finalPrecioDia = precioDia?.toDouble() ?: -1.0
 
                                         productList.add(
-                                            ProductoConPrecio(
-                                                nombre,
-                                                cantidad,
-                                                precioMercadona,
-                                                precioCarrefour,
-                                                precioDia
-                                            )
+                                            ProductoConPrecio(nombre, cantidad, finalPrecioMercadona, finalPrecioDia)
                                         )
                                         updateSupermarketViews()
                                         etProduct.text.clear()
@@ -161,7 +144,6 @@ class CreateListFragment : Fragment() {
                                         imm.hideSoftInputFromWindow(view?.windowToken, 0)
                                     }
                                 }
-
                         } else {
                             Toast.makeText(requireContext(), "Producto no encontrado", Toast.LENGTH_SHORT).show()
                         }
@@ -174,7 +156,6 @@ class CreateListFragment : Fragment() {
 
     private fun updateSupermarketViews() {
         updateSupermarketView("Mercadona", mercadonaContainer)
-        updateSupermarketView("Carrefour", carrefourContainer)
         updateSupermarketView("Dia", diaContainer)
     }
 
@@ -190,66 +171,77 @@ class CreateListFragment : Fragment() {
         header.findViewById<TextView>(R.id.tv_super_title).text = name
         val logo = when (name.lowercase()) {
             "mercadona" -> R.drawable.logo_mercadona
-            "carrefour" -> R.drawable.logo_carrefour
             "dia" -> R.drawable.logo_dia
-            else -> R.drawable.logo_app // Por si acaso
+            else -> R.drawable.logo_app
         }
         header.findViewById<ImageView>(R.id.iv_logo).setImageResource(logo)
 
-        val container = when (name.lowercase()) {
+        val containerReal = when (name.lowercase()) {
             "mercadona" -> view?.findViewById<LinearLayout>(R.id.mercadona_container)
-            "carrefour" -> view?.findViewById<LinearLayout>(R.id.carrefour_container)
             "dia" -> view?.findViewById<LinearLayout>(R.id.dia_container)
             else -> null
         }
 
-        container?.addView(header)
+        containerReal?.addView(header)
 
         var total = 0.0
+        var totalNoDisponibles = 0.0
+
         for (producto in productList) {
+            val mercadonaDisponible = producto.precioMercadona != -1.0
+            val diaDisponible = producto.precioDia != -1.0
+            val disponibleEnAmbos = mercadonaDisponible && diaDisponible
+
             val unitPrice = when (name) {
                 "Mercadona" -> producto.precioMercadona
-                "Carrefour" -> producto.precioCarrefour
                 "Dia" -> producto.precioDia
                 else -> 0.0
             }
 
-            // Calcular precio mínimo entre supermercados para este producto
-            val minPrice = listOf(
-                producto.precioMercadona,
-                producto.precioCarrefour,
-                producto.precioDia
-            ).minOrNull() ?: 0.0
-
-            val totalPrice = unitPrice * producto.cantidad
+            val cantidad = producto.cantidad
+            val totalPrice = unitPrice * cantidad
 
             val itemView = layoutInflater.inflate(R.layout.item_producto, container, false)
             val tvNombre = itemView.findViewById<TextView>(R.id.tv_nombre_producto)
             val tvPrecio = itemView.findViewById<TextView>(R.id.tv_precio_producto)
             val btnBorrar = itemView.findViewById<Button>(R.id.btn_borrar)
 
-            // Texto del producto, con estrella si es el más barato
-            tvNombre.text = if (unitPrice == minPrice) "${producto.nombre} ⭐" else producto.nombre
+            tvNombre.text = producto.nombre
 
-            // Estilo en negrita si es el más barato
-            tvNombre.setTypeface(null, if (unitPrice == minPrice) Typeface.BOLD else Typeface.NORMAL)
+            if (unitPrice == -1.0) {
+                tvPrecio.text = "No disponible"
+                tvPrecio.setTextColor(resources.getColor(R.color.red, null))
+                totalNoDisponibles += when (name) {
+                    "Mercadona" -> if (mercadonaDisponible) producto.precioMercadona * cantidad else 0.0
+                    "Dia" -> if (diaDisponible) producto.precioDia * cantidad else 0.0
+                    else -> 0.0
+                }
+            } else {
+                tvPrecio.text = "Precio: %.2f€ (x%d)".format(totalPrice, cantidad)
+                tvPrecio.setTextColor(resources.getColor(R.color.smoky_black, null))
 
-            // Precio
-            tvPrecio.text = "Precio: %.2f€".format(totalPrice)
+                if (mercadonaDisponible && diaDisponible) {
+                    total += totalPrice
+                }
+            }
 
             btnBorrar.setOnClickListener {
                 productList.remove(producto)
                 updateSupermarketViews()
             }
 
-            total += totalPrice
-            container?.addView(itemView)
+            containerReal?.addView(itemView)
         }
 
         val totalText = TextView(requireContext()).apply {
-            text = "Total: %.2f€".format(total)
+            text = if (totalNoDisponibles > 0.0) {
+                "Total: %.2f€ · Incluye %.2f€ en productos no disponibles".format(total, totalNoDisponibles)
+            } else {
+                "Total: %.2f€".format(total)
+            }
             setTextColor(resources.getColor(R.color.smoky_black, null))
             setPadding(0, 16, 0, 0)
+            textSize = 16f
         }
 
         val btnAddList = Button(requireContext()).apply {
@@ -266,13 +258,11 @@ class CreateListFragment : Fragment() {
                         quantity = it.cantidad,
                         unitPrice = when (name) {
                             "Mercadona" -> it.precioMercadona
-                            "Carrefour" -> it.precioCarrefour
                             "Dia" -> it.precioDia
                             else -> 0.0
                         }
                     )
                 }
-
                 viewModel.addList(supermarket = name, productos = productos)
 
                 parentFragmentManager.beginTransaction()
@@ -284,10 +274,7 @@ class CreateListFragment : Fragment() {
             }
         }
 
-        if (container != null) {
-            container.addView(totalText)
-            container.addView(btnAddList)
-        }
-
+        containerReal?.addView(totalText)
+        containerReal?.addView(btnAddList)
     }
 }
