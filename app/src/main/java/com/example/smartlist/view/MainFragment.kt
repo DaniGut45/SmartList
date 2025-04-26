@@ -1,5 +1,6 @@
 package com.example.smartlist.view
 
+// Importaciones necesarias
 import android.os.Bundle
 import android.view.*
 import android.widget.Button
@@ -15,79 +16,59 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore
 
+// Fragmento principal que muestra las listas de la compra
 class MainFragment : Fragment() {
 
+    // Guarda el ID del usuario logueado en Firebase Auth
     val userId = FirebaseAuth.getInstance().currentUser?.uid
+
+    // RecyclerView para mostrar la lista de compras
     private lateinit var recyclerView: RecyclerView
+
+    // Adaptador del RecyclerView
     private lateinit var adapter: ListAdapter
+
+    // Lista local donde almacenamos las listas de compras
     private val listas = mutableListOf<ShoppingList>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
+        // Inflamos el layout del fragment
         val view = inflater.inflate(R.layout.fragment_main, container, false)
 
+        // Inicializamos el RecyclerView y su adaptador
         recyclerView = view.findViewById(R.id.recyclerLists)
-
-        // Inicializamos el adaptador con la lista vacía, que luego se llenará
         adapter = ListAdapter(listas)
         recyclerView.adapter = adapter
 
+        // Obtenemos el ViewModel compartido con la MainActivity
         val viewModel = (activity as MainActivity).shoppingListViewModel
 
-        // Observamos el ViewModel para actualizar la lista si hay cambios
+        // Observamos los cambios en las listas de compra del ViewModel
         viewModel.shoppingLists.observe(viewLifecycleOwner) { newList ->
             listas.clear()
             listas.addAll(newList)
             adapter.notifyDataSetChanged()
         }
 
-        // Botón para ir al fragmento de creación de nueva lista
+        // Pedimos al ViewModel que cargue las listas desde Firestore (Base de Datos)
+        viewModel.loadListsFromFirestore()
+
+        // Configuramos el botón de "Crear nueva lista"
         view.findViewById<Button>(R.id.btn_create_list).setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .setCustomAnimations(
-                    R.anim.slide_in_right,  // animación al entrar
-                    R.anim.slide_out_left,  // animación al salir
-                    R.anim.slide_in_left,   // animación al volver (pop enter)
-                    R.anim.slide_out_right  // animación al volver (pop exit)
+                    R.anim.slide_in_right,
+                    R.anim.slide_out_left,
+                    R.anim.slide_in_left,
+                    R.anim.slide_out_right
                 )
-                .replace<CreateListFragment>(R.id.fragmentContainer)
-                .addToBackStack(null) // permite volver con el botón atrás
+                .replace<CreateListFragment>(R.id.fragmentContainer) // Cambiamos al fragmento de crear lista
+                .addToBackStack(null) // Guardamos esta transacción en la pila para poder volver atrás
                 .commit()
         }
 
-        // Si el usuario está autenticado, cargamos sus listas desde Firestore
-        if (userId != null) {
-            Firebase.firestore.collection("usuarios")
-                .document(userId)
-                .collection("listas")
-                .get()
-                .addOnSuccessListener { listasDocs ->
-                    listas.clear()
-
-                    listasDocs.forEach { doc ->
-                        val dateTime = doc.getString("dateTime") ?: ""
-                        val store = doc.getString("storeName") ?: ""
-                        val total = doc.getDouble("total") ?: 0.0
-
-                        // Se obtiene la subcolección de productos dentro de cada lista
-                        doc.reference.collection("productos").get()
-                            .addOnSuccessListener { productosDocs ->
-                                val productos = productosDocs.map {
-                                    Producto(
-                                        it.getString("name") ?: "",
-                                        (it.getLong("quantity") ?: 0).toInt(),
-                                        it.getDouble("unitPrice") ?: 0.0
-                                    )
-                                }
-
-                                val lista = ShoppingList(dateTime, store, productos, false, total)
-                                listas.add(lista)
-                                adapter.notifyDataSetChanged()
-                            }
-                    }
-                }
-        }
         return view
     }
 }

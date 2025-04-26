@@ -1,9 +1,9 @@
 package com.example.smartlist.view
 
+// Importaciones necesarias
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.widget.ImageButton
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -17,44 +17,48 @@ import com.example.smartlist.view.UserFragment
 import com.example.smartlist.viewmodel.ShoppingListViewModel
 import com.google.firebase.auth.FirebaseAuth
 
+// Actividad principal que gestiona la navegación y la sesión del usuario
 class MainActivity : AppCompatActivity() {
 
     private lateinit var btnHome: ImageButton
     private lateinit var btnProfile: ImageButton
 
-    // ViewModel compartido para manejar datos de la lista de compras
+    // ViewModel compartido entre fragments para manejar las listas de compra
     val shoppingListViewModel by viewModels<ShoppingListViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Evita que el tema splash se quede permanentemente aplicado
+        // Eliminamos el tema splash para mostrar el tema principal
         setTheme(R.style.Theme_SmartList)
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Inicializamos botones de navegación inferior
         btnHome = findViewById(R.id.btn_home)
         btnProfile = findViewById(R.id.btn_profile)
 
         val addButton: ImageButton = findViewById(R.id.btn_add)
         addButton.setOnClickListener {
-            // Reemplaza el fragmento actual con el de creación de lista
+            // Cuando se pulsa el botón de añadir, abre el fragmento de creación de lista
             supportFragmentManager.commit {
                 replace<CreateListFragment>(R.id.fragmentContainer)
             }
-            updateBottomNavColors("add")
+            updateBottomNavColors("add") // Actualiza colores de navegación
         }
 
-        // Carga inicial de fragmento dependiendo del estado de sesión
+        // 🚀 Carga inicial de fragmento según si el usuario ya está logueado o no
         if (savedInstanceState == null) {
             val currentUser = FirebaseAuth.getInstance().currentUser
 
             if (currentUser != null) {
+                // Si el usuario existe, marcamos sesión activa y mostramos el MainFragment
                 SessionManager.isLoggedIn = true
                 supportFragmentManager.commit {
                     replace<MainFragment>(R.id.fragmentContainer)
                 }
                 updateBottomNavColors("home")
             } else {
+                // Si no hay usuario, mostramos el fragmento de registro
                 SessionManager.isLoggedIn = false
                 supportFragmentManager.commit {
                     replace<RegisterFragment>(R.id.fragmentContainer)
@@ -63,14 +67,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Ajusta padding del contenedor según la visibilidad de las barras del sistema
+        // 📏 Ajuste del padding de la pantalla para respetar las barras del sistema
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.fragmentContainer)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top - 80, systemBars.right, systemBars.bottom)
             insets
         }
 
-        // Navega a Home (MainFragment)
+        // 🔙 Pulsar el botón de Home → vuelve al MainFragment
         btnHome.setOnClickListener {
             supportFragmentManager.commit {
                 replace<MainFragment>(R.id.fragmentContainer)
@@ -78,18 +82,18 @@ class MainActivity : AppCompatActivity() {
             updateBottomNavColors("home")
         }
 
-        // Navega a perfil o registro dependiendo del estado de sesión
+        // 👤 Pulsar el botón de Profile → va al fragmento de usuario o registro, según sesión
         btnProfile.setOnClickListener {
             val fragment = if (SessionManager.isLoggedIn) {
-                UserFragment()
+                UserFragment() // Usuario logueado
             } else {
-                RegisterFragment()
+                RegisterFragment() // Usuario no registrado
             }
 
             supportFragmentManager.beginTransaction()
                 .setCustomAnimations(
-                    R.anim.slide_in_right,
-                    R.anim.slide_out_left
+                    R.anim.slide_in_right, // Animación al entrar
+                    R.anim.slide_out_left  // Animación al salir
                 )
                 .replace(R.id.fragmentContainer, fragment)
                 .commit()
@@ -98,25 +102,25 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Cambia el color de los botones de navegación inferior según el ítem seleccionado
+    // 🎨 Función que actualiza los colores de los iconos de navegación inferior
     fun updateBottomNavColors(selected: String) {
-        val golden = getColor(R.color.dark_goldenrod)
-        val black = getColor(R.color.smoky_black)
+        val golden = getColor(R.color.dark_goldenrod) // Color resaltado
+        val black = getColor(R.color.smoky_black)      // Color base
 
         when (selected) {
             "home" -> {
-                btnHome.setColorFilter(golden)
+                btnHome.setColorFilter(golden) // Resalta Home
                 btnProfile.setColorFilter(black)
                 findViewById<ImageButton>(R.id.btn_add).setColorFilter(black)
             }
             "add" -> {
                 btnHome.setColorFilter(black)
                 btnProfile.setColorFilter(black)
-                findViewById<ImageButton>(R.id.btn_add).setColorFilter(golden)
+                findViewById<ImageButton>(R.id.btn_add).setColorFilter(golden) // Resalta botón de añadir
             }
             "profile" -> {
                 btnHome.setColorFilter(black)
-                btnProfile.setColorFilter(golden)
+                btnProfile.setColorFilter(golden) // Resalta Perfil
                 findViewById<ImageButton>(R.id.btn_add).setColorFilter(black)
             }
         }
