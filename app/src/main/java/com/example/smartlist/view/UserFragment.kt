@@ -3,6 +3,7 @@ package com.example.smartlist.view
 import android.os.Bundle
 import android.view.*
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.fragment.app.replace
@@ -59,19 +60,41 @@ class UserFragment : Fragment() {
 
         // Cierre de sesión y retorno al fragmento principal
         logoutButton.setOnClickListener {
-            SessionManager.isLoggedIn = false
-            FirebaseAuth.getInstance().signOut()
+            // Mostrar un AlertDialog de confirmación antes de cerrar sesión
+            AlertDialog.Builder(requireContext())
+                .setTitle("Cerrar sesión")
+                .setMessage("¿Estás seguro de que quieres cerrar sesión?")
+                .setPositiveButton("Sí") { dialog, _ ->
+                    // 🔴 1. Cerrar sesión en Firebase
+                    FirebaseAuth.getInstance().signOut()
 
-            parentFragmentManager.beginTransaction()
-                .setCustomAnimations(
-                    R.anim.slide_in_left,
-                    R.anim.slide_out_right
-                )
-                .replace(R.id.fragmentContainer, MainFragment())
-                .commit()
+                    // 🔴 2. Marcar sesión como cerrada
+                    SessionManager.isLoggedIn = false
 
-            (activity as? MainActivity)?.updateBottomNavColors("home")
+                    // 🔴 3. Limpiar las listas en memoria
+                    (activity as? MainActivity)?.shoppingListViewModel?.clear()
+
+                    // 🔴 4. Volver al fragmento de registro (no al MainFragment)
+                    parentFragmentManager.beginTransaction()
+                        .setCustomAnimations(
+                            R.anim.slide_in_left,
+                            R.anim.slide_out_right
+                        )
+                        .replace(R.id.fragmentContainer, RegisterFragment())
+                        .commit()
+
+                    // 🔴 5. Actualizar colores de la barra inferior
+                    (activity as? MainActivity)?.updateBottomNavColors("profile")
+
+                    dialog.dismiss()
+                }
+                .setNegativeButton("Cancelar") { dialog, _ ->
+                    // El usuario canceló, no hacemos nada
+                    dialog.dismiss()
+                }
+                .show()
         }
+
 
         return view
     }
