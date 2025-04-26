@@ -300,10 +300,24 @@ class CreateListFragment : Fragment() {
                 tvPrecio.text = "No disponible"
                 tvPrecio.setTextColor(resources.getColor(R.color.red, null))
             } else {
-                tvPrecio.text = "Precio: %.2f€ (x%d)".format(totalPrice, cantidad)
+                // 🧠 Ahora detectamos si este producto es el más barato
+                val esMercadona = name == "Mercadona"
+                val precioEsteSuper = if (esMercadona) producto.precioMercadona else producto.precioDia
+                val precioOtroSuper = if (esMercadona) producto.precioDia else producto.precioMercadona
+
+                val totalPrice = precioEsteSuper * cantidad
+
+                if (precioEsteSuper != -1.0 && precioOtroSuper != -1.0 && precioEsteSuper < precioOtroSuper) {
+                    // ⭐ Producto más barato → ponemos negrita y estrella
+                    tvPrecio.text = "⭐ Precio: %.2f€ (x%d)".format(totalPrice, cantidad)
+                    tvPrecio.setTypeface(null, Typeface.BOLD)
+                } else {
+                    // Producto normal
+                    tvPrecio.text = "Precio: %.2f€ (x%d)".format(totalPrice, cantidad)
+                    tvPrecio.setTypeface(null, Typeface.NORMAL)
+                }
+
                 tvPrecio.setTextColor(resources.getColor(R.color.smoky_black, null))
-                if (mercadonaDisponible && diaDisponible) total += totalPrice
-                totalBruto += totalPrice
             }
 
             btnBorrar.setOnClickListener {
