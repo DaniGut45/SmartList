@@ -5,6 +5,10 @@
 
     <color name="red">#D93030</color>
 
+    <color name="green">#4CAF50</color>
+
+    <color name="orange">#FF8000</color>
+
     <!-- Color de apoyo (borrar producto) -->
     <color name="eggshell">#F5EDDB</color>
 

@@ -1,11 +1,14 @@
+// Paquete y dependencias necesarias
 package com.example.smartlist.view
 
-// Importaciones necesarias para trabajar con Firebase, Google Sign-In y Android
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.os.CountDownTimer
+import android.text.InputType
 import android.view.*
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.example.smartlist.R
 import com.example.smartlist.utils.SessionManager
@@ -15,46 +18,69 @@ import com.google.firebase.auth.*
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
-// Fragmento que gestiona el inicio de sesión de los usuarios
+// Fragmento de login (pantalla de inicio de sesión)
 class LoginFragment : Fragment() {
 
-    private lateinit var auth: FirebaseAuth // Objeto de autenticación Firebase
-    private lateinit var googleSignInClient: GoogleSignInClient // Cliente para inicio de sesión con Google
-    private val RC_GOOGLE_SIGN_IN = 1002 // Código de solicitud para identificar el login con Google
+    // Declaración de variables necesarias
+    private lateinit var auth: FirebaseAuth
+    private lateinit var googleSignInClient: GoogleSignInClient
+    private lateinit var loginButton: Button
+    private lateinit var forgotPasswordText: TextView
+    private var remainingAttempts = 5 // Intentos de login permitidos
+    private val RC_GOOGLE_SIGN_IN = 1002 // Código de respuesta para login con Google
 
+    // Método que se ejecuta al crear la vista
     @SuppressLint("MissingInflatedId")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         val view = inflater.inflate(R.layout.fragment_login, container, false)
 
-        auth = FirebaseAuth.getInstance() // Inicializamos la autenticación Firebase
+        // Inicialización de FirebaseAuth
+        auth = FirebaseAuth.getInstance()
 
-        // Configuración de opciones para Google Sign-In
+        // Configuración de inicio de sesión con Google
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id)) // ID de cliente OAuth 2.0
+            .requestIdToken(getString(R.string.default_web_client_id))
             .requestEmail()
             .build()
 
-        googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso) // Inicializamos cliente de Google
+        googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
 
-        // Referencias a los elementos de la vista
-        val forgotPasswordText = view.findViewById<TextView>(R.id.tv_forgot_password)
+        // Asignación de vistas
+        forgotPasswordText = view.findViewById(R.id.tv_forgot_password)
         val etEmail = view.findViewById<EditText>(R.id.et_email)
         val etPassword = view.findViewById<EditText>(R.id.et_password)
-        val loginButton = view.findViewById<Button>(R.id.btn_login)
+        loginButton = view.findViewById(R.id.btn_login)
         val toRegisterText = view.findViewById<TextView>(R.id.tv_to_register)
         val btnGoogleLogin = view.findViewById<TextView>(R.id.btn_google_register)
+        val ivTogglePassword = view.findViewById<ImageView>(R.id.iv_toggle_password)
+        var isPasswordVisible = false
 
-        // 📧 Recuperación de contraseña por correo
+        // Alternar visibilidad de la contraseña
+        ivTogglePassword.setOnClickListener {
+            if (isPasswordVisible) {
+                // Ocultar contraseña
+                etPassword.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+                ivTogglePassword.setImageResource(android.R.drawable.ic_menu_view)
+            } else {
+                // Mostrar contraseña
+                etPassword.inputType = InputType.TYPE_CLASS_TEXT
+                ivTogglePassword.setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+            }
+            etPassword.setSelection(etPassword.text.length)
+            isPasswordVisible = !isPasswordVisible
+        }
+
+        // Manejar "¿Olvidaste tu contraseña?"
         forgotPasswordText.setOnClickListener {
             val email = etEmail.text.toString().trim()
-
             if (email.isEmpty()) {
                 Toast.makeText(requireContext(), "Introduce tu correo para recuperar la contraseña", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
+            // Enviar correo de recuperación de contraseña
             auth.sendPasswordResetEmail(email)
                 .addOnSuccessListener {
                     Toast.makeText(requireContext(), "Te hemos enviado un correo para restablecer tu contraseña", Toast.LENGTH_LONG).show()
@@ -64,7 +90,7 @@ class LoginFragment : Fragment() {
                 }
         }
 
-        // 🔒 Inicio de sesión con email y contraseña
+        // Botón de login tradicional (email y contraseña)
         loginButton.setOnClickListener {
             val email = etEmail.text.toString().trim()
             val password = etPassword.text.toString().trim()
@@ -74,11 +100,12 @@ class LoginFragment : Fragment() {
                 return@setOnClickListener
             }
 
+            // Intentar iniciar sesión
             auth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener {
-                    SessionManager.isLoggedIn = true // Usuario logueado correctamente
+                    SessionManager.isLoggedIn = true
 
-                    // Navegar al fragmento principal tras login exitoso
+                    // Cambiar a la pantalla principal si el login es exitoso
                     parentFragmentManager.beginTransaction()
                         .setCustomAnimations(
                             R.anim.slide_in_left,
@@ -87,34 +114,23 @@ class LoginFragment : Fragment() {
                         .replace(R.id.fragmentContainer, MainFragment())
                         .commit()
 
-                    (activity as? MainActivity)?.updateBottomNavColors("home") // Cambia colores de navegación
+                    (activity as? MainActivity)?.updateBottomNavColors("home")
                 }
                 .addOnFailureListener { exception ->
-                    // Manejo de errores específicos de Firebase
-                    when (exception) {
-                        is FirebaseAuthInvalidUserException -> {
-                            Toast.makeText(requireContext(), "No existe una cuenta con este correo", Toast.LENGTH_SHORT).show()
-                        }
-                        is FirebaseAuthInvalidCredentialsException -> {
-                            Toast.makeText(requireContext(), "Correo o contraseña incorrectos", Toast.LENGTH_SHORT).show()
-                        }
-                        else -> {
-                            Toast.makeText(requireContext(), "Error: ${exception.message}", Toast.LENGTH_LONG).show()
-                        }
-                    }
+                    handleFailedLogin(exception)
                 }
         }
 
-        // 🔵 Inicio de sesión con cuenta de Google
+        // Botón de login con Google
         btnGoogleLogin.setOnClickListener {
+            // Cerrar sesión previa para forzar nueva autenticación
             googleSignInClient.signOut().addOnCompleteListener {
-                // Abrimos el intent de Google Sign-In
                 val signInIntent = googleSignInClient.signInIntent
                 startActivityForResult(signInIntent, RC_GOOGLE_SIGN_IN)
             }
         }
 
-        // ➡️ Enlace para ir al registro de nuevo usuario
+        // Navegar a la pantalla de registro
         toRegisterText.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .setCustomAnimations(
@@ -128,7 +144,54 @@ class LoginFragment : Fragment() {
         return view
     }
 
-    // 📥 Manejo del resultado del intent de Google Sign-In
+    // Manejar fallos en el login
+    private fun handleFailedLogin(exception: Exception) {
+        remainingAttempts--
+
+        if (remainingAttempts > 0) {
+            Toast.makeText(
+                requireContext(),
+                "Inicio de sesión fallido. Te quedan $remainingAttempts intentos.",
+                Toast.LENGTH_SHORT
+            ).show()
+        } else {
+            showBlockDialog()
+        }
+    }
+
+    // Mostrar diálogo cuando la cuenta está temporalmente bloqueada
+    private fun showBlockDialog() {
+        val builder = AlertDialog.Builder(requireContext())
+        builder.setTitle("Cuenta bloqueada")
+        builder.setMessage("Se ha bloqueado temporalmente el inicio de sesión")
+        builder.setPositiveButton("Restaurar contraseña") { _, _ ->
+            forgotPasswordText.performClick()
+        }
+        builder.setNegativeButton("Aceptar") { dialog, _ ->
+            blockLoginButton()
+            dialog.dismiss()
+        }
+        builder.setCancelable(false)
+        builder.show()
+    }
+
+    // Bloquear botón de login durante 60 segundos
+    private fun blockLoginButton() {
+        loginButton.isEnabled = false
+        object : CountDownTimer(60000, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                loginButton.text = "Bloqueado (${millisUntilFinished / 1000}s)"
+            }
+
+            override fun onFinish() {
+                loginButton.isEnabled = true
+                loginButton.text = "Iniciar sesión"
+                remainingAttempts = 5
+            }
+        }.start()
+    }
+
+    // Resultado del intento de login con Google
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -138,24 +201,24 @@ class LoginFragment : Fragment() {
                 val account = task.getResult(ApiException::class.java)!!
                 val credential = GoogleAuthProvider.getCredential(account.idToken, null)
 
-                // Autenticamos en Firebase usando las credenciales de Google
+                // Autenticación con Firebase usando credenciales de Google
                 auth.signInWithCredential(credential)
                     .addOnCompleteListener { task ->
                         if (task.isSuccessful) {
                             val user = auth.currentUser
                             val userId = user?.uid ?: return@addOnCompleteListener
 
+                            // Guardar datos básicos del usuario en Firestore
                             val userMap = mapOf(
                                 "nombre" to (user.displayName ?: "Sin nombre"),
                                 "email" to (user.email ?: "Sin email")
                             )
 
-                            // Guardamos datos básicos del usuario en Firestore
                             Firebase.firestore.collection("usuarios").document(userId).set(userMap)
                                 .addOnSuccessListener {
                                     SessionManager.isLoggedIn = true
 
-                                    // Navegamos al fragmento principal después del login
+                                    // Ir a la pantalla principal
                                     parentFragmentManager.beginTransaction()
                                         .setCustomAnimations(
                                             R.anim.slide_in_left,
