@@ -42,7 +42,8 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.fragment) // Agregar esta línea
+    implementation(libs.androidx.fragment)
+    implementation(libs.androidx.swiperefreshlayout) // Agregar esta línea
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -57,6 +57,8 @@ class ShoppingListViewModel : ViewModel() {
         db.collection("usuarios").document(userId)
             .collection("listas").add(listData)
             .addOnSuccessListener { docRef ->
+                list.id = docRef.id  // ← así también guardas el id en el objeto local
+                _shoppingLists.postValue(_shoppingLists.value)
                 // Una vez añadida, subimos cada producto como subdocumento
                 productos.forEach { producto ->
                     val productoMap = mapOf(
@@ -110,16 +112,23 @@ class ShoppingListViewModel : ViewModel() {
         db.collection("usuarios")
             .document(userId)
             .collection("listas")
+            .orderBy("dateTime", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { listasDocs ->
+                if (listasDocs.isEmpty) {
+                    _shoppingLists.value = mutableListOf()
+                    return@addOnSuccessListener
+                }
+
                 val listasTemp = mutableListOf<ShoppingList>()
+                var listasCargadas = 0
+                val totalListas = listasDocs.size()
 
                 listasDocs.forEach { doc ->
                     val dateTime = doc.getString("dateTime") ?: ""
                     val store = doc.getString("storeName") ?: ""
                     val total = doc.getDouble("total") ?: 0.0
 
-                    // Cargamos los productos asociados a esta lista
                     doc.reference.collection("productos").get()
                         .addOnSuccessListener { productosDocs ->
                             val productos = productosDocs.map {
@@ -130,13 +139,26 @@ class ShoppingListViewModel : ViewModel() {
                                 )
                             }
 
-                            // Creamos el objeto ShoppingList completo
-                            val lista = ShoppingList(dateTime, store, productos, false, total)
-                            listasTemp.add(lista)
+                            val lista = ShoppingList(
+                                id = doc.id, // ← Aquí asignamos el id
+                                dateTime = dateTime,
+                                storeName = store,
+                                products = productos,
+                                isExpanded = false,
+                                total = total
+                            )
 
-                            // Cuando terminemos de cargar todos los productos de todas las listas
-                            if (listasTemp.size == listasDocs.size()) {
-                                _shoppingLists.value = listasTemp // Actualizamos el LiveData
+                            listasTemp.add(lista)
+                            listasCargadas++
+
+                            if (listasCargadas == totalListas) {
+                                _shoppingLists.value = listasTemp
+                            }
+                        }
+                        .addOnFailureListener {
+                            listasCargadas++
+                            if (listasCargadas == totalListas) {
+                                _shoppingLists.value = listasTemp
                             }
                         }
                 }

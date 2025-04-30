@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -6,7 +5,7 @@
     android:layout_height="wrap_content"
     android:padding="12dp">
 
-    <!-- Cabecera -->
+    <!-- Fecha/Hora -->
     <TextView
         android:id="@+id/tv_date_time"
         android:layout_width="0dp"
@@ -16,8 +15,34 @@
         android:textSize="16sp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/iv_arrow"/>
+        app:layout_constraintEnd_toStartOf="@id/btn_delete"
+        android:layout_marginEnd="8dp"/>
 
+    <!-- Botón eliminar (papelera) -->
+    <ImageButton
+        android:id="@+id/btn_delete"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Eliminar lista"
+        android:src="@drawable/logo_delete"
+        app:tint="@color/smoky_black"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Flecha expandir/colapsar -->
+    <ImageView
+        android:id="@+id/iv_arrow"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/logo_arrow_down"
+        android:rotation="0"
+        app:tint="@color/smoky_black"
+        app:layout_constraintTop_toBottomOf="@id/btn_delete"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="4dp"/>
+
+    <!-- Nombre del supermercado -->
     <TextView
         android:id="@+id/tv_store"
         android:layout_width="wrap_content"
@@ -28,6 +53,7 @@
         app:layout_constraintTop_toBottomOf="@id/tv_date_time"
         app:layout_constraintStart_toStartOf="parent"/>
 
+    <!-- Total de la compra -->
     <TextView
         android:id="@+id/tv_total"
         android:layout_width="wrap_content"
@@ -43,17 +69,7 @@
         app:layout_constraintEnd_toStartOf="@id/iv_arrow"
         app:layout_constraintTop_toBottomOf="@id/tv_date_time" />
 
-    <ImageView
-        android:id="@+id/iv_arrow"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:src="@drawable/logo_arrow_down"
-        android:rotation="0"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
-
-    <!-- Contenedor productos -->
+    <!-- Contenedor de productos (expandible) -->
     <LinearLayout
         android:id="@+id/layout_products"
         android:layout_width="0dp"
@@ -64,5 +80,4 @@
         app:layout_constraintTop_toBottomOf="@id/tv_store"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
-
 </androidx.constraintlayout.widget.ConstraintLayout>
