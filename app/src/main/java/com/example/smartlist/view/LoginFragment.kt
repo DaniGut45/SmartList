@@ -80,13 +80,21 @@ class LoginFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            // Enviar correo de recuperación de contraseña
-            auth.sendPasswordResetEmail(email)
-                .addOnSuccessListener {
-                    Toast.makeText(requireContext(), "Te hemos enviado un correo para restablecer tu contraseña", Toast.LENGTH_LONG).show()
-                }
-                .addOnFailureListener {
-                    Toast.makeText(requireContext(), "Error al enviar el correo: ${it.message}", Toast.LENGTH_LONG).show()
+            // Intento de login falso para forzar validación del correo
+            auth.signInWithEmailAndPassword(email, "contrasena_incorrecta")
+                .addOnCompleteListener { task ->
+                    if (task.exception is FirebaseAuthInvalidUserException) {
+                        Toast.makeText(requireContext(), "El correo no está registrado.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        // El correo existe (aunque la contraseña esté mal)
+                        auth.sendPasswordResetEmail(email)
+                            .addOnSuccessListener {
+                                Toast.makeText(requireContext(), "Te hemos enviado un correo para restablecer tu contraseña", Toast.LENGTH_LONG).show()
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(requireContext(), "Error al enviar el correo: ${it.message}", Toast.LENGTH_LONG).show()
+                            }
+                    }
                 }
         }
 
@@ -237,7 +245,12 @@ class LoginFragment : Fragment() {
                         }
                     }
             } catch (e: ApiException) {
-                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                val message = if (e.statusCode == 7) {
+                    "Sin conexión a Internet. Por favor, verifica tu red e inténtalo de nuevo."
+                } else {
+                    "Error: ${e.message}"
+                }
+                Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
             }
         }
     }

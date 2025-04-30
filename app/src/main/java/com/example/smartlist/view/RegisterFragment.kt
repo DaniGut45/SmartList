@@ -240,7 +240,12 @@ class RegisterFragment : Fragment() {
                         }
                     }
             } catch (e: ApiException) {
-                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                val message = if (e.statusCode == 7) {
+                    "Sin conexión a Internet. Por favor, verifica tu red e inténtalo de nuevo."
+                } else {
+                    "Error: ${e.message}"
+                }
+                Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
             }
         }
     }
