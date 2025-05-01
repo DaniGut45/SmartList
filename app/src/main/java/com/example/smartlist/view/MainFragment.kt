@@ -1,10 +1,12 @@
 package com.example.smartlist.view
 
 // Importaciones necesarias
+import android.os.Build
 import android.os.Bundle
 import android.view.*
 import android.widget.Button
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
@@ -18,6 +20,8 @@ import com.example.smartlist.view.adapters.ListAdapter
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.firestore
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 // Fragmento principal que muestra las listas de la compra
 class MainFragment : Fragment() {
@@ -34,6 +38,7 @@ class MainFragment : Fragment() {
     // Lista local donde almacenamos las listas de compras
     private val listas = mutableListOf<ShoppingList>()
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
@@ -53,8 +58,14 @@ class MainFragment : Fragment() {
 
         // Observamos los cambios en las listas de compra del ViewModel
         viewModel.shoppingLists.observe(viewLifecycleOwner) { newList ->
+            val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm")
+
+            val listasOrdenadas = newList.sortedByDescending {
+                LocalDateTime.parse(it.dateTime, formatter)
+            }
+
             listas.clear()
-            listas.addAll(newList)
+            listas.addAll(listasOrdenadas)
             adapter.notifyDataSetChanged()
         }
 
